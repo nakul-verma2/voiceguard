@@ -1,0 +1,9 @@
+{
+  "fast2sms_api_key": "AOCj4z7hsfrPHnW1JxI5wpui3gKlEVNvS9RtQGFoT2YcLZeXdBWpOcF10mlEsqTi49CgN7DdzYount3y",
+  "emergency_contacts": [
+    "7060458431",
+    "6395602127"
+  ],
+  "alert_cooldown_seconds": 300,
+  "enable_sms_alerts": true
+}

@@ -1,5 +1,5 @@
 """
-Incident recording and management for VoiceGuard
+Incident recording and management for VoiceGuard (Updated with Speech Analysis)
 """
 import json
 import time
@@ -22,8 +22,9 @@ class IncidentRecorder:
         print(f"   Incidents: {incidents_dir}/")
         print(f"   Audio evidence: {audio_dir}/")
     
-    def record_incident(self, threat_level, volume, speech_confidence, audio_data, sample_rate=16000):
-        """Record a new incident with audio evidence"""
+    def record_incident(self, threat_level, volume, speech_confidence, audio_data, 
+                       speech_analysis=None, sample_rate=16000):
+        """Record a new incident with audio evidence and speech analysis"""
         self.incident_count += 1
         timestamp = datetime.now()
         
@@ -62,6 +63,10 @@ class IncidentRecorder:
             "detection_system": "VoiceGuard v1.0"
         }
         
+        # Add speech analysis if available
+        if speech_analysis:
+            incident_data["speech_analysis"] = speech_analysis
+        
         # Save incident JSON
         try:
             with open(json_file, 'w') as f:
@@ -71,8 +76,20 @@ class IncidentRecorder:
             print(f"   Threat: {threat_level}")
             print(f"   Volume: {volume:.0f}")
             print(f"   Confidence: {speech_confidence:.2f}")
-            print(f"   Evidence: {audio_file if audio_saved else 'Failed to save'}")
-            print(f"   Duration: {audio_duration:.1f}s")
+            
+            # Print speech analysis if available
+            if speech_analysis and speech_analysis["transcription"]["text"]:
+                text = speech_analysis["transcription"]["text"]
+                text_threat = speech_analysis["text_analysis"]["threat_level"]
+                keywords = speech_analysis["text_analysis"]["keywords_found"]
+                
+                print(f"   📝 Transcript: '{text}'")
+                print(f"   🎯 Text Threat: {text_threat}")
+                if keywords:
+                    print(f"   ⚠️  Keywords: {', '.join(keywords)}")
+            
+            print(f"   💾 Evidence: {audio_file if audio_saved else 'Failed to save'}")
+            print(f"   ⏱️  Duration: {audio_duration:.1f}s")
             
             return incident_data
             
