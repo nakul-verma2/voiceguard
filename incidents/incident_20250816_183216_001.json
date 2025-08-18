@@ -1,0 +1,12 @@
+{
+  "incident_id": "incident_20250816_183216_001",
+  "timestamp": "2025-08-16T18:32:16.874390",
+  "threat_level": "HIGH",
+  "volume": 16023.34375,
+  "speech_confidence": 0.95,
+  "audio_file": "evidence\\incident_20250816_183216_001.wav",
+  "audio_duration_seconds": 8.0,
+  "audio_saved": true,
+  "sample_rate": 16000,
+  "detection_system": "VoiceGuard v1.0"
+}
