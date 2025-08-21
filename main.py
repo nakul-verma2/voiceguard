@@ -1,6 +1,3 @@
-"""
-VoiceGuard Main Application - Step 5: Emergency SMS Alerts
-"""
 import time
 import numpy as np
 import asyncio
@@ -68,12 +65,12 @@ async def main():
                     speech_confidence = vad_detector.get_speech_confidence()
                     
                     # Audio threat calculation
-                    if volume > 15000 and speech_confidence > 0.7:
+                    if volume > 10000 and speech_confidence > 0.7:
                         audio_threat_level = "HIGH"
                         threat_emoji = "🔴"
                         consecutive_high_threats += 1
                         high_threat_chunks += 1
-                    elif volume > 8000 and speech_confidence > 0.5:
+                    elif volume > 1000 and speech_confidence > 0.5:
                         audio_threat_level = "MEDIUM"
                         threat_emoji = "🟡"
                         consecutive_high_threats = 0
