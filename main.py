@@ -6,6 +6,8 @@ from utils.vad import VoiceActivityDetector
 from utils.incident import IncidentRecorder
 from utils.audio_buffer import AudioBuffer
 from utils.speech_analysis import SpeechAnalyzer
+from utils.sos import sos
+
 
 
 async def main():
@@ -19,8 +21,7 @@ async def main():
     audio_buffer = AudioBuffer(max_duration_seconds=15)
     speech_analyzer = SpeechAnalyzer(model_size="base")
 
-    
-    
+
     # Stats tracking
     total_chunks = 0
     speech_chunks = 0
@@ -28,7 +29,7 @@ async def main():
     consecutive_high_threats = 0
     
     # Incident detection parameters
-    HIGH_THREAT_THRESHOLD = 3
+    HIGH_THREAT_THRESHOLD = 1
     COOLDOWN_TIME = 30
     last_incident_time = 0
     
@@ -65,7 +66,7 @@ async def main():
                     speech_confidence = vad_detector.get_speech_confidence()
                     
                     # Audio threat calculation
-                    if volume > 10000 and speech_confidence > 0.7:
+                    if volume > 1000 and speech_confidence > 0.7:
                         audio_threat_level = "HIGH"
                         threat_emoji = "🔴"
                         consecutive_high_threats += 1
@@ -111,7 +112,8 @@ async def main():
                         if incident:
                             # Send emergency SMS alert
                             print("📱 Sending emergency SMS alert...")
-                            
+                            phone = input("Enter destination phone (e.g., +11234567890): ").strip()
+                            sms_sent = sos(phone)
                             if sms_sent:
                                 print("✅ Emergency contacts notified!")
                             else:

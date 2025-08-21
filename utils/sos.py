@@ -13,11 +13,10 @@ def setup_logger():
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-def main():
+def sos(phone):
     setup_logger()
 
     try:
-        phone = input("Enter destination phone (e.g., +11234567890): ").strip()
         if not phone:
             print("Phone number is required.")
             sys.exit(2)
@@ -51,6 +50,3 @@ def main():
     except requests.RequestException as e:
         logging.error(f"Network/Request error: {e}")
         sys.exit(3)
-
-if __name__ == "__main__":
-    main()
