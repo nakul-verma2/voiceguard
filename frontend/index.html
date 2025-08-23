@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VoiceGuard - AI-Powered Domestic Violence Detection</title>
+    <meta name="description" content="VoiceGuard uses AI to detect domestic violence through audio analysis and provide immediate assistance" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <!-- Skip to content -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Quick Exit Button (Hidden initially) -->
+    <button id="quick-exit" class="quick-exit-btn" aria-label="Quick Exit - Press Escape" title="Quick Exit (Esc)">
+        <span class="exit-icon"></span>
+    </button>
+
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg" role="navigation">
+            <div class="container-fluid">
+                <!-- Logo -->
+                <a class="navbar-brand" href="#" aria-label="VoiceGuard Home">
+                    <svg class="logo-svg" viewBox="0 0 200 40" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:var(--accent);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:var(--fg);stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <text x="10" y="28" class="logo-text" fill="url(#logoGrad)">VoiceGuard</text>
+                    </svg>
+                </a>
+
+                <!-- Controls -->
+                <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                    <button id="mode-toggle" class="nav-btn" aria-label="Toggle between Impact and Calm mode">
+                        <span id="mode-text">Calm</span>
+                    </button>
+                    <select id="language-select" class="nav-select" aria-label="Select language">
+                        <option value="en">EN</option>
+                        <option value="hi">हिं</option>
+                        <option value="bn">বাংলা</option>
+                        <option value="ta">தமிழ்</option>
+                        <option value="te">తెలుగు</option>
+                        <option value="mr">मराठी</option>
+                    </select>
+                    <button id="header-exit" class="nav-btn exit-btn" aria-label="Quick Exit">Exit</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Content Warning Modal -->
+    <div id="content-warning-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="warning-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content warning-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="warning-title" data-i18n="warning_title">Content Warning</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="warning-icon"></div>
+                    <p data-i18n="warning_text">This website contains content related to domestic violence and abuse. The content may be disturbing and triggering for some users.</p>
+                    <p><strong data-i18n="warning_emergency">If you are in immediate danger, call emergency services: 112</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="resources-only" data-i18n="resources_only">View Resources Only</button>
+                    <button type="button" class="btn btn-primary" id="proceed-btn" data-i18n="proceed">Proceed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 text-center">
+                        <h1 class="hero-title" data-i18n="hero_title">Hear the Silence. Break the Cycle.</h1>
+                        <p class="hero-subtitle" data-i18n="hero_subtitle">AI-powered detection system that identifies domestic violence through voice patterns and connects victims to immediate help.</p>
+
+                        <div class="hero-cta">
+                            <button class="btn btn-primary btn-lg cta-demo" id="try-demo" data-i18n="try_demo">Try Live Demo (Mock)</button>
+                            <button class="btn btn-outline-light btn-lg cta-help" data-i18n="get_help">Get Help Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fracture-overlay"></div>
+            <div class="heartbeat-glow"></div>
+        </section>
+
+        <!-- Problem & Stats -->
+        <section id="problem" class="stats-section">
+            <div class="container">
+                <h2 class="section-title" data-i18n="stats_title">The Hidden Crisis</h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number" data-count="31">0</div>
+                            <p class="stat-label" data-i18n="stat1">% of women in India face domestic violence</p>
+                            <small class="stat-source">National Family Health Survey, 2019-21</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number" data-count="86">0</div>
+                            <p class="stat-label" data-i18n="stat2">% of cases go unreported</p>
+                            <small class="stat-source">UN Women India, 2023</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-number" data-count="19">0</div>
+                            <p class="stat-label" data-i18n="stat3">women killed daily due to domestic violence</p>
+                            <small class="stat-source">National Crime Records Bureau, 2022</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section id="how" class="how-section">
+            <div class="container">
+                <h2 class="section-title" data-i18n="how_title">How VoiceGuard Works</h2>
+                <div class="pipeline-container">
+                    <div class="row g-4">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="step-card">
+                                <div class="step-icon mic-icon"></div>
+                                <h3 data-i18n="step1_title">Audio Capture</h3>
+                                <p data-i18n="step1_desc">Real-time background audio monitoring with privacy-first encryption</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="step-card">
+                                <div class="step-icon brain-icon"></div>
+                                <h3 data-i18n="step2_title">AI Detection</h3>
+                                <p data-i18n="step2_desc">Advanced ML models detect distress patterns, threats, and violence indicators</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="step-card">
+                                <div class="step-icon alert-icon"></div>
+                                <h3 data-i18n="step3_title">Smart Response</h3>
+                                <p data-i18n="step3_desc">Contextual escalation based on threat level and user safety</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="step-card">
+                                <div class="step-icon help-icon"></div>
+                                <h3 data-i18n="step4_title">Immediate Help</h3>
+                                <p data-i18n="step4_desc">Connect to local authorities, NGOs, and support networks instantly</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Legal Guidance -->
+        <section id="legal" class="legal-section">
+            <div class="container">
+                <h2 class="section-title" data-i18n="legal_title">Legal Guidance (India)</h2>
+                <div class="legal-tabs">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fir-tab" role="tab" data-i18n="fir_tab">Police Complaint (FIR)</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dv-act-tab" role="tab" data-i18n="dv_act_tab">DV Act 2005</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ipc-tab" role="tab" data-i18n="ipc_tab">498A IPC</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#protection-tab" role="tab" data-i18n="protection_tab">Protection Orders</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="fir-tab" role="tabpanel">
+                            <div class="legal-content">
+                                <h4 data-i18n="fir_title">File an FIR (First Information Report)</h4>
+                                <div class="complaint-generator">
+                                    <form id="complaint-form">
+                                        <div class="mb-3">
+                                            <label for="complainant-name" class="form-label" data-i18n="name_label">Your Name</label>
+                                            <input type="text" class="form-control" id="complainant-name" required />
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="incident-date" class="form-label" data-i18n="date_label">Date of Incident</label>
+                                            <input type="date" class="form-control" id="incident-date" required />
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="incident-desc" class="form-label" data-i18n="description_label">Brief Description</label>
+                                            <textarea class="form-control" id="incident-desc" rows="4" required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary" data-i18n="generate_complaint">Generate Complaint Draft</button>
+                                    </form>
+                                    <div id="generated-complaint" class="mt-4 d-none">
+                                        <h5 data-i18n="complaint_draft">Complaint Draft</h5>
+                                        <textarea id="complaint-text" class="form-control" rows="10" readonly></textarea>
+                                        <button class="btn btn-secondary mt-2" id="copy-complaint" data-i18n="copy_text">Copy Text</button>
+                                    </div>
+                                </div>
+                                <div class="legal-disclaimer">
+                                    <p><strong data-i18n="legal_disclaimer">Disclaimer:</strong> <span data-i18n="disclaimer_text">This is not legal advice. Please consult with a qualified lawyer or NGO for personalized legal guidance.</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="dv-act-tab" role="tabpanel">
+                            <div class="legal-content">
+                                <h4 data-i18n="dv_act_title">Domestic Violence Act, 2005</h4>
+                                <p data-i18n="dv_act_desc">The Protection of Women from Domestic Violence Act, 2005 provides civil remedies for domestic violence survivors.</p>
+                                <ul>
+                                    <li data-i18n="dv_act_point1">Protection orders to prevent further violence</li>
+                                    <li data-i18n="dv_act_point2">Residence orders for shared household rights</li>
+                                    <li data-i18n="dv_act_point3">Monetary relief for maintenance and compensation</li>
+                                    <li data-i18n="dv_act_point4">Custody orders for children</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="ipc-tab" role="tabpanel">
+                            <div class="legal-content">
+                                <h4 data-i18n="ipc_title">Section 498A IPC</h4>
+                                <p data-i18n="ipc_desc">Cruelty by husband or relatives of husband - imprisonment up to 3 years and fine.</p>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="protection-tab" role="tabpanel">
+                            <div class="legal-content">
+                                <h4 data-i18n="protection_title">Protection Orders</h4>
+                                <p data-i18n="protection_desc">Court orders that legally require the abuser to stop the abusive behavior.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NGO & Helplines -->
+        <section id="ngos" class="ngos-section">
+            <div class="container">
+                <h2 class="section-title" data-i18n="ngos_title">Help & Support Directory</h2>
+
+                <div class="emergency-numbers">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <a href="tel:181" class="emergency-btn women-helpline">
+                                <span class="emergency-number">181</span>
+                                <span class="emergency-label" data-i18n="womens_helpline">Women's Helpline</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="tel:112" class="emergency-btn emergency-services">
+                                <span class="emergency-number">112</span>
+                                <span class="emergency-label" data-i18n="emergency_services">Emergency Services</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-row">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <select class="form-select" id="city-filter" aria-label="Filter by city">
+                                <option value="all" data-i18n="all_cities">All Cities</option>
+                                <option value="delhi">Delhi</option>
+                                <option value="mumbai">Mumbai</option>
+                                <option value="bangalore">Bangalore</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="type-filter" aria-label="Filter by service type">
+                                <option value="all" data-i18n="all_types">All Services</option>
+                                <option value="legal" data-i18n="legal">Legal Aid</option>
+                                <option value="shelter" data-i18n="shelter">Shelter</option>
+                                <option value="counseling" data-i18n="counseling">Counseling</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-grid">
+                            <!-- Add HTML fallback so it works even if JS fails -->
+                            <button class="btn btn-outline-primary" id="stealth-tips" data-i18n="stealth_tips"
+                                data-bs-toggle="modal" data-bs-target="#stealth-modal">Stealth Safety Tips</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ngo-directory" class="ngo-grid">
+                    <!-- NGO cards will be populated by JavaScript -->
+                </div>
+
+                <!-- Stealth Tips Modal -->
+                <div id="stealth-modal" class="modal fade" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" data-i18n="stealth_title">Stealth Safety Tips</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <ul>
+                                    <li data-i18n="stealth_tip1">Use incognito/private browsing mode</li>
+                                    <li data-i18n="stealth_tip2">Clear browser history and call logs regularly</li>
+                                    <li data-i18n="stealth_tip3">Use public computers when possible</li>
+                                    <li data-i18n="stealth_tip4">Create code words with trusted friends</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stealth Features -->
+        <section id="stealth" class="stealth-section">
+            <div class="container">
+                <h2 class="section-title" data-i18n="stealth_section_title">Stealth & Safety Features</h2>
+                <div class="row g-4 justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="stealth-features">
+                            <h3 data-i18n="stealth_features_title">Privacy Protection</h3>
+                            <ul class="feature-list">
+                                <li data-i18n="feature1">Background detection (Android compatibility)</li>
+                                <li data-i18n="feature2">Codeword activation system</li>
+                                <li data-i18n="feature3">Disguised app (Weather)</li>
+                                <li data-i18n="feature4">Quick exit with history clearing</li>
+                                <li data-i18n="feature5">End-to-end data encryption</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multilingual & Accessibility -->
+        <section id="i18n" class="accessibility-section">
+            <div class="container">
+                <h2 class="section-title" data-i18n="accessibility_title">Accessibility & Language Support</h2>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="accessibility-controls">
+                            <h3 data-i18n="accessibility_controls_title">Accessibility Options</h3>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <input type="checkbox" id="reduced-motion" />
+                                    <span data-i18n="reduced_motion">Reduce Motion</span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <input type="checkbox" id="high-contrast" />
+                                    <span data-i18n="high_contrast">High Contrast</span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" for="font-size">
+                                    <span data-i18n="font_size">Font Size</span>
+                                </label>
+                                <input type="range" id="font-size" min="14" max="24" value="16" class="form-range" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="language-support">
+                            <h3 data-i18n="language_support_title">Language Support</h3>
+                            <p data-i18n="language_desc">VoiceGuard supports multiple Indian languages and dialects:</p>
+                            <div class="language-grid">
+                                <button class="lang-tag" data-lang="hi" type="button" role="button" tabindex="0">हिंदी</button>
+                                <button class="lang-tag" data-lang="en" type="button" role="button" tabindex="0">English</button>
+                                <button class="lang-tag" data-lang="bn" type="button" role="button" tabindex="0">বাংলা</button>
+                                <button class="lang-tag" data-lang="ta" type="button" role="button" tabindex="0">தமிழ்</button>
+                                <button class="lang-tag" data-lang="te" type="button" role="button" tabindex="0">తెలుగు</button>
+                                <button class="lang-tag" data-lang="mr" type="button" role="button" tabindex="0">मराठी</button>
+                            </div>
+                            <small class="text-muted d-block mt-2">Tip: Click a chip or use the header dropdown to switch the full site language.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Roadmap & Ethics -->
+        <section id="ethics" class="ethics-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h2 class="section-title" data-i18n="roadmap_title">Development Roadmap</h2>
+                        <div class="roadmap-chips">
+                            <span class="roadmap-chip" data-i18n="roadmap1">On-device ML Models</span>
+                            <span class="roadmap-chip" data-i18n="roadmap2">Regional Dialect Support</span>
+                            <span class="roadmap-chip" data-i18n="roadmap3">NGO API Integration</span>
+                            <span class="roadmap-chip" data-i18n="roadmap4">Security Audits</span>
+                            <span class="roadmap-chip" data-i18n="roadmap5">iOS/Android Apps</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <h2 class="section-title" data-i18n="ethics_title">Ethics & Responsibility</h2>
+                        <div class="ethics-content">
+                            <p data-i18n="ethics_desc">We acknowledge the critical importance of accuracy in domestic violence detection systems.</p>
+                            <ul class="ethics-list">
+                                <li data-i18n="ethics1">Continuous testing for false positives/negatives</li>
+                                <li data-i18n="ethics2">Informed consent and user agency</li>
+                                <li data-i18n="ethics3">Data minimization and privacy-first design</li>
+                                <li data-i18n="ethics4">Regular red-team security testing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <nav class="footer-nav" aria-label="Footer navigation">
+                        <a href="#ngos" data-i18n="footer_resources">Resources</a>
+                        <a href="#" data-i18n="footer_terms">Terms</a>
+                        <a href="#" data-i18n="footer_privacy">Privacy</a>
+                        <a href="mailto:help@voiceguard.org" data-i18n="footer_contact">Contact</a>
+                        <a href="#" data-i18n="footer_github">GitHub</a>
+                    </nav>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <p class="footer-disclaimer" data-i18n="footer_disclaimer">Demo only. Do not rely on this site in emergencies.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
