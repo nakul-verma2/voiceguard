@@ -11,6 +11,8 @@ from utils.vad import VoiceActivityDetector
 from utils.incident import IncidentRecorder
 from utils.audio_buffer import AudioBuffer
 from utils.speech_analysis import SpeechAnalyzer
+# --- Import the chatbot function ---
+from utils.chatbot import chat as chatbot_response
 
 
 app = Flask(__name__,
@@ -240,6 +242,20 @@ def upload_evidence():
         'message': f'Successfully uploaded {len(successful_uploads)} file(s).',
         'filenames': successful_uploads
     }), 200
+
+# --- Chatbot Route ---
+@app.route('/chat', methods=['POST'])
+def chat_route():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    message = data.get('message')
+    language = data.get('language', 'auto')
+    
+    if not user_id or not message:
+        return jsonify({'error': 'user_id and message are required.'}), 400
+        
+    response = chatbot_response(user_id, message, language=language)
+    return jsonify(response)
 
 
 # --- Main Execution ---

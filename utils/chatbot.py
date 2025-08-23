@@ -105,12 +105,18 @@ def chat(user_id: str, message: str, language: str = "auto") -> dict:
     if not message:
         return {"error": "No message provided"}
     
-    # Detect language if auto
-    if language == "auto":
-        language = detect_language(message)
+    # --- Language Handling ---
+    lang_map = {
+        'en': 'english',
+        'hi': 'hindi',
+    }
+    
+    effective_language = lang_map.get(language, 'english')
+    if language == 'auto':
+        effective_language = detect_language(message)
 
     try:
-        messages = build_conversation_context(user_id, message, language)
+        messages = build_conversation_context(user_id, message, effective_language)
         response = client.chat.completions.create(
             model=model_id,
             messages=messages,
@@ -122,7 +128,7 @@ def chat(user_id: str, message: str, language: str = "auto") -> dict:
         update_session_history(user_id, message, ai_response)
         return {
             "response": ai_response,
-            "language": language,
+            "language": effective_language,
             "user_id": user_id,
             "session_length": len(user_sessions[user_id]['history'])
         }

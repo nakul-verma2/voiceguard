@@ -3,6 +3,8 @@ class VoiceGuardApp {
     constructor() {
         this.currentMode = localStorage.getItem('voiceguard-mode') || 'impact';
         this.currentLang = localStorage.getItem('voiceguard-lang') || 'en';
+        // --- Chatbot User ID ---
+        this.chatbotUserId = this.getChatbotUserId();
         
         this.initializeApp();
         this.setupEventListeners();
@@ -399,7 +401,7 @@ class VoiceGuardApp {
             step1_desc: "గోప్యత-మొదటి ఎన్‌క్రిప్షన్‌తో నిజ-సమయ నేపథ్య ఆడియో పర్యవేక్షణ",
             step2_title: "AI గుర్తింపు",
             step2_desc: "అధునాతన ML నమూనాలు కష్టాల నమూనాలు, బెదిరింపులు మరియు హింస సూచికలను గుర్తిస్తాయి",
-            step3_title: "స్మార్ట్ ప్రతిస్పందన",
+            step3_title: "స్మార్ట్ ప్రతిస్పన",
             step3_desc: "ప్రమాద స్థాయి మరియు వినియోగదారు భద్రత ఆధారంగా సందర్భోచిత తీవ్రత",
             step4_title: "తక్షణ సహాయం",
             step4_desc: "స్థానిక అధికారులు, NGOలు మరియు మద్దతు నెట్‌వర్క్‌లతో తక్షణమే కనెక్ట్ అవ్వండి",
@@ -567,6 +569,9 @@ class VoiceGuardApp {
         setTimeout(() => {
             this.animateCounters();
         }, 1000);
+        
+        // --- Load Chat History ---
+        this.loadChatHistory();
     }
 
     setupEventListeners() {
@@ -634,10 +639,12 @@ class VoiceGuardApp {
             this.filterNGOs();
         });
 
-        // Chatbot listeners
+        // --- Chatbot listeners ---
         const chatbotIcon = document.getElementById('chatbot-icon');
         const chatbotWindow = document.getElementById('chatbot-window');
         const chatbotClose = document.getElementById('chatbot-close');
+        const chatbotSend = document.getElementById('chatbot-send');
+        const chatbotInput = document.getElementById('chatbot-input');
 
         if (chatbotIcon && chatbotWindow && chatbotClose) {
             chatbotIcon.addEventListener('click', () => {
@@ -646,6 +653,13 @@ class VoiceGuardApp {
 
             chatbotClose.addEventListener('click', () => {
                 chatbotWindow.classList.remove('open');
+            });
+
+            chatbotSend.addEventListener('click', () => this.sendChatMessage());
+            chatbotInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.sendChatMessage();
+                }
             });
         }
     }
@@ -861,6 +875,96 @@ DISCLAIMER: This is an auto-generated template. Please consult with a lawyer or 
         }
         
         this.renderNGOs(filteredNGOs);
+    }
+
+    // --- Chatbot Functionality ---
+    getChatbotUserId() {
+        let userId = localStorage.getItem('voiceguard-chatbot-userid');
+        if (!userId) {
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('voiceguard-chatbot-userid', userId);
+        }
+        return userId;
+    }
+
+    markdownToHtml(text) {
+        // Convert **bold** to <strong>
+        let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Convert newlines to <br>
+        html = html.replace(/\n/g, '<br>');
+        return html;
+    }
+
+    addChatMessage(message, sender) {
+        const chatBody = document.getElementById('chatbot-body');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chatbot-message ${sender}`;
+        messageDiv.innerHTML = this.markdownToHtml(message);
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    saveMessageToHistory(message, sender) {
+        let history = JSON.parse(sessionStorage.getItem('voiceguard-chat-history')) || [];
+        history.push({ message, sender });
+        sessionStorage.setItem('voiceguard-chat-history', JSON.stringify(history));
+    }
+
+    loadChatHistory() {
+        const history = JSON.parse(sessionStorage.getItem('voiceguard-chat-history'));
+        if (history && history.length > 0) {
+            const chatBody = document.getElementById('chatbot-body');
+            // Clear the initial greeting message
+            chatBody.innerHTML = '';
+            history.forEach(item => {
+                this.addChatMessage(item.message, item.sender);
+            });
+        }
+    }
+
+    async sendChatMessage() {
+        const input = document.getElementById('chatbot-input');
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        this.addChatMessage(message, 'user');
+        this.saveMessageToHistory(message, 'user');
+        input.value = '';
+        input.disabled = true;
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: this.chatbotUserId,
+                    message: message,
+                    language: this.currentLang,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.response) {
+                this.addChatMessage(data.response, 'bot');
+                this.saveMessageToHistory(data.response, 'bot');
+            } else {
+                const errorMessage = 'Sorry, something went wrong.';
+                this.addChatMessage(errorMessage, 'bot');
+                this.saveMessageToHistory(errorMessage, 'bot');
+            }
+        } catch (error) {
+            console.error('Chatbot error:', error);
+            const errorMessage = 'Sorry, I cannot connect to the server right now.';
+            this.addChatMessage(errorMessage, 'bot');
+            this.saveMessageToHistory(errorMessage, 'bot');
+        } finally {
+            input.disabled = false;
+            input.focus();
+        }
     }
 }
 
