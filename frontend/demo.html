@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VoiceGuard - Live Protection Dashboard</title>
+    <meta name="description" content="VoiceGuard's live dashboard for managing safety features like voice recording, trusted contacts, and evidence uploading." />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Embedded CSS -->
+    <style>
+        /* CSS Variables */
+        :root {
+            --bg: #0b0b0d;
+            --fg: #f2f2f2;
+            --accent: #e21d2f;
+            --muted: #8a8a8a;
+            --border: rgba(242, 242, 242, 0.1);
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --shadow: 0 4px 20px rgba(226, 29, 47, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Calm Mode Variables */
+        [data-mode="calm"] {
+            --bg: #101217;
+            --fg: #eef2f7;
+            --accent: #7c3aed;
+            --muted: #9aa5b1;
+            --border: rgba(238, 242, 247, 0.1);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --shadow: 0 4px 20px rgba(124, 58, 237, 0.2);
+        }
+
+        /* Base Styles */
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            transition: var(--transition);
+        }
+
+        /* Header */
+        header {
+            background: rgba(11, 11, 13, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        [data-mode="calm"] header {
+            background: rgba(16, 18, 23, 0.95);
+        }
+
+        .navbar {
+            padding: 1rem 0;
+        }
+
+        .logo-svg {
+            height: 40px;
+            width: 200px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-btn, .nav-select {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--fg);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .nav-btn:hover, .nav-select:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .nav-select option {
+            background: var(--bg);
+            color: var(--fg);
+        }
+
+        .exit-btn {
+            background: var(--accent) !important;
+            color: white !important;
+            border-color: var(--accent) !important;
+        }
+
+        /* Main Content */
+        main {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .empowering-quote {
+            text-align: center;
+            color: var(--muted);
+            font-style: italic;
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: var(--transition);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: var(--shadow);
+        }
+
+        .feature-card h3 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            flex-grow: 1;
+        }
+
+        /* Voice Recorder */
+        .recorder-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--muted);
+            transition: var(--transition);
+        }
+
+        .status-dot.recording {
+            background-color: var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(226, 29, 47, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(226, 29, 47, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(226, 29, 47, 0); }
+        }
+
+        [data-mode="calm"] .status-dot.recording {
+            animation-name: pulse-calm;
+        }
+
+        @keyframes pulse-calm {
+            0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(124, 58, 237, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+        }
+
+        /* Trusted Contacts */
+        .contact-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem;
+        }
+
+        .contact-item {
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .remove-contact-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+        }
+        .remove-contact-btn:hover {
+            color: var(--accent);
+        }
+
+        /* Evidence Locker */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .upload-area:hover {
+            border-color: var(--accent);
+            background-color: rgba(255,255,255,0.05);
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem;
+            text-align: left;
+        }
+        .file-item {
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        .remove-file-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+        }
+        .remove-file-btn:hover {
+            color: var(--accent);
+        }
+
+        /* General Form & Button Styles */
+        .form-control {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            color: var(--fg);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 0.2rem rgba(226, 29, 47, 0.25);
+            color: var(--fg);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.2);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .site-footer {
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid var(--border);
+            padding: 3rem 0 2rem;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg" role="navigation">
+            <div class="container">
+                <!-- Logo -->
+                <a class="navbar-brand" href="index.html" aria-label="VoiceGuard Home">
+                    <svg class="logo-svg" viewBox="0 0 200 40" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:var(--accent);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:var(--fg);stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <text x="10" y="28" class="logo-text" fill="url(#logoGrad)">VoiceGuard</text>
+                    </svg>
+                </a>
+
+                <!-- Controls -->
+                <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                    <button id="mode-toggle" class="nav-btn" aria-label="Toggle between Impact and Calm mode">
+                        <span id="mode-text">Calm</span>
+                    </button>
+                    <select id="language-select" class="nav-select" aria-label="Select language">
+                        <option value="en">EN</option>
+                        <option value="hi">हिं</option>
+                        <option value="bn">বাংলা</option>
+                        <option value="ta">தமிழ்</option>
+                        <option value="te">తెలుగు</option>
+                        <option value="mr">मराठी</option>
+                    </select>
+                    <button id="header-exit" class="nav-btn exit-btn" aria-label="Quick Exit" data-i18n="exit_button">Exit</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <div class="container">
+            <h1 class="section-title" data-i18n="page_title">Protection Dashboard</h1>
+            <p class="empowering-quote" data-i18n="page_quote">"The most courageous act is still to think for yourself. Aloud." - Coco Chanel</p>
+
+            <div class="row g-4">
+                <!-- Voice Recorder -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <h3 data-i18n="recorder_title">Voice Recorder</h3>
+                        <p data-i18n="recorder_desc">Silently record background audio. The recording will be encrypted and stored securely.</p>
+                        <button id="record-btn" class="btn btn-primary w-100" data-i18n="recorder_start">Start Recording</button>
+                        <div class="recorder-status">
+                            <div id="status-dot" class="status-dot"></div>
+                            <span id="status-text" data-i18n="recorder_idle">Idle</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trusted Contacts -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <h3 data-i18n="contacts_title">Trusted Contacts</h3>
+                        <p data-i18n="contacts_desc">Add phone numbers of people you trust. In an emergency, an alert can be sent to them.</p>
+                        <div class="input-group">
+                            <input type="tel" id="contact-input" class="form-control" placeholder="Enter phone number" data-i18n="contacts_placeholder">
+                            <button id="add-contact-btn" class="btn btn-primary" data-i18n="contacts_add">Add</button>
+                        </div>
+                        <ul id="contact-list" class="contact-list"></ul>
+                    </div>
+                </div>
+
+                <!-- Evidence Locker -->
+                <div class="col-lg-4 col-md-12">
+                    <div class="feature-card">
+                        <h3 data-i18n="evidence_title">Evidence Locker</h3>
+                        <p data-i18n="evidence_desc">Securely upload photos, screenshots, or documents. Your evidence is encrypted and private.</p>
+                        <div id="upload-area" class="upload-area">
+                            <span data-i18n="evidence_upload_prompt">Click or drag files here</span>
+                        </div>
+                        <input type="file" id="file-input" multiple hidden>
+                        <ul id="file-list" class="file-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container text-center">
+            <p class="text-muted" data-i18n="footer_disclaimer">For your safety, all data is encrypted. Remember to use the Exit button if you need to leave quickly.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Embedded JavaScript -->
+    <script>
+        // --- !! CRITICAL SAFETY FEATURE !! ---
+        // This code block is a failsafe to prevent the browser's "back" button
+        // from re-opening this page after a user has exited. It checks if the
+        // page is being loaded from the browser's cache (bfcache).
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                // If 'persisted' is true, the user is likely using the back button.
+                // Immediately blank the page and redirect to a safe, neutral site.
+                document.body.innerHTML = '';
+                window.location.replace('https://weather.com');
+            }
+        });
+
+        class VoiceGuardDemoApp {
+            constructor() {
+                this.currentMode = localStorage.getItem('voiceguard-mode') || 'impact';
+                this.currentLang = localStorage.getItem('voiceguard-lang') || 'en';
+                this.isRecording = false;
+                this.trustedContacts = JSON.parse(localStorage.getItem('voiceguard-contacts')) || [];
+                this.uploadedFiles = [];
+
+                this.initializeApp();
+                this.setupEventListeners();
+            }
+
+            // --- I18N (Internationalization) ---
+            i18n = {
+                en: {
+                    exit_button: "Exit",
+                    page_title: "Protection Dashboard",
+                    page_quote: "\"The most courageous act is still to think for yourself. Aloud.\" - Coco Chanel",
+                    recorder_title: "Voice Recorder",
+                    recorder_desc: "Silently record background audio. The recording will be encrypted and stored securely.",
+                    recorder_start: "Start Recording",
+                    recorder_stop: "Stop Recording",
+                    recorder_idle: "Idle",
+                    recorder_recording: "Recording...",
+                    contacts_title: "Trusted Contacts",
+                    contacts_desc: "Add phone numbers of people you trust. In an emergency, an alert can be sent to them.",
+                    contacts_placeholder: "Enter phone number",
+                    contacts_add: "Add",
+                    evidence_title: "Evidence Locker",
+                    evidence_desc: "Securely upload photos, screenshots, or documents. Your evidence is encrypted and private.",
+                    evidence_upload_prompt: "Click or drag files here",
+                    footer_disclaimer: "For your safety, all data is encrypted. Remember to use the Exit button if you need to leave quickly."
+                },
+                hi: {
+                    exit_button: "बाहर निकलें",
+                    page_title: "सुरक्षा डैशबोर्ड",
+                    page_quote: "\"सबसे साहसी कार्य अभी भी अपने लिए सोचना है। ज़ोर से।\" - कोको शनैल",
+                    recorder_title: "वॉयस रिकॉर्डर",
+                    recorder_desc: "चुपचाप पृष्ठभूमि ऑडियो रिकॉर्ड करें। रिकॉर्डिंग एन्क्रिप्ट की जाएगी और सुरक्षित रूप से संग्रहीत की जाएगी।",
+                    recorder_start: "रिकॉर्डिंग शुरू करें",
+                    recorder_stop: "रिकॉर्डिंग बंद करें",
+                    recorder_idle: "निष्क्रिय",
+                    recorder_recording: "रिकॉर्डिंग हो रही है...",
+                    contacts_title: "विश्वसनीय संपर्क",
+                    contacts_desc: "जिन लोगों पर आप भरोसा करते हैं उनके फ़ोन नंबर जोड़ें। आपात स्थिति में, उन्हें एक अलर्ट भेजा जा सकता है।",
+                    contacts_placeholder: "फ़ोन नंबर दर्ज करें",
+                    contacts_add: "जोड़ें",
+                    evidence_title: "सबूत लॉकर",
+                    evidence_desc: "फ़ोटो, स्क्रीनशॉट या दस्तावेज़ सुरक्षित रूप से अपलोड करें। आपके सबूत एन्क्रिप्टेड और निजी हैं।",
+                    evidence_upload_prompt: "फ़ाइलों को यहां क्लिक करें या खींचें",
+                    footer_disclaimer: "आपकी सुरक्षा के लिए, सभी डेटा एन्क्रिप्ट किया गया है। यदि आपको जल्दी से बाहर निकलने की आवश्यकता है तो बाहर निकलें बटन का उपयोग करना याद रखें।"
+                },
+                bn: { // Bengali
+                    exit_button: "প্রস্থান",
+                    page_title: "সুরক্ষা ড্যাশবোর্ড",
+                    page_quote: "\"সবচেয়ে সাহসী কাজ এখনও নিজের জন্য চিন্তা করা। উচ্চস্বরে।\" - কোকো চ্যানেল",
+                    recorder_title: "ভয়েস রেকর্ডার",
+                    recorder_desc: "নীরবে পটভূমি অডিও রেকর্ড করুন। রেকর্ডিং এনক্রিপ্ট করা হবে এবং নিরাপদে সংরক্ষণ করা হবে।",
+                    recorder_start: "রেকর্ডিং শুরু করুন",
+                    recorder_stop: "রেকর্ডিং বন্ধ করুন",
+                    recorder_idle: "নিষ্ক্রিয়",
+                    recorder_recording: "রেকর্ডিং হচ্ছে...",
+                    contacts_title: "বিশ্বস্ত পরিচিতি",
+                    contacts_desc: "আপনি বিশ্বাস করেন এমন লোকদের ফোন নম্বর যোগ করুন। জরুরী পরিস্থিতিতে, তাদের কাছে একটি সতর্কতা পাঠানো যেতে পারে।",
+                    contacts_placeholder: "ফোন নম্বর লিখুন",
+                    contacts_add: "যোগ করুন",
+                    evidence_title: "প্রমাণ লকার",
+                    evidence_desc: "নিরাপদে ফটো, স্ক্রিনশট বা নথি আপলোড করুন। আপনার প্রমাণ এনক্রিপ্ট করা এবং ব্যক্তিগত।",
+                    evidence_upload_prompt: "ফাইলগুলি এখানে ক্লিক করুন বা টেনে আনুন",
+                    footer_disclaimer: "আপনার সুরক্ষার জন্য, সমস্ত ডেটা এনক্রিপ্ট করা হয়েছে। আপনার যদি দ্রুত চলে যাওয়ার প্রয়োজন হয় তবে প্রস্থান বোতামটি ব্যবহার করতে ভুলবেন না।"
+                },
+                ta: { // Tamil
+                    exit_button: "வெளியேறு",
+                    page_title: "பாதுகாப்பு டாஷ்போர்டு",
+                    page_quote: "\"மிகவும் ധൈര്യமான செயல் இன்னும் உங்களுக்காக நீங்களே சிந்திப்பதுதான். உரக்க.\" - கோகோ சேனல்",
+                    recorder_title: "குரல் ரெக்கார்டர்",
+                    recorder_desc: "பின்னணி ஆடியோவை அமைதியாக பதிவு செய்யவும். பதிவு குறியாக்கம் செய்யப்பட்டு பாதுகாப்பாக சேமிக்கப்படும்.",
+                    recorder_start: "பதிவைத் தொடங்கு",
+                    recorder_stop: "பதிவை நிறுத்து",
+                    recorder_idle: "செயலற்றது",
+                    recorder_recording: "பதிவு செய்கிறது...",
+                    contacts_title: "நம்பகமான தொடர்புகள்",
+                    contacts_desc: "நீங்கள் நம்பும் நபர்களின் தொலைபேசி எண்களைச் சேர்க்கவும். அவசரகாலத்தில், அவர்களுக்கு ஒரு எச்சரிக்கை அனுப்பப்படலாம்.",
+                    contacts_placeholder: "தொலைபேசி எண்ணை உள்ளிடவும்",
+                    contacts_add: "சேர்",
+                    evidence_title: "சான்று லாக்கர்",
+                    evidence_desc: "புகைப்படங்கள், ஸ்கிரீன் ஷாட்கள் அல்லது ஆவணங்களை பாதுகாப்பாக பதிவேற்றவும். உங்கள் சான்றுகள் குறியாக்கம் செய்யப்பட்டு தனிப்பட்டவை.",
+                    evidence_upload_prompt: "கோப்புகளை இங்கே கிளிக் செய்யவும் அல்லது இழுக்கவும்",
+                    footer_disclaimer: "உங்கள் பாதுகாப்பிற்காக, எல்லா தரவும் குறியாக்கம் செய்யப்பட்டுள்ளது. நீங்கள் விரைவாக வெளியேற வேண்டும் என்றால் வெளியேறு பொத்தானைப் பயன்படுத்த நினைவில் கொள்ளுங்கள்."
+                },
+                te: { // Telugu
+                    exit_button: "నిష్క్రమించు",
+                    page_title: "రక్షణ డాష్‌బోర్డ్",
+                    page_quote: "\"అత్యంత ధైర్యమైన చర్య ఇప్పటికీ మీ కోసం మీరు ఆలోచించడం. బిగ్గరగా.\" - కోకో చానెల్",
+                    recorder_title: "వాయిస్ రికార్డర్",
+                    recorder_desc: "నేపథ్య ఆడియోను నిశ్శబ్దంగా రికార్డ్ చేయండి. రికార్డింగ్ ఎన్‌క్రిప్ట్ చేయబడి సురక్షితంగా నిల్వ చేయబడుతుంది.",
+                    recorder_start: "రికార్డింగ్ ప్రారంభించు",
+                    recorder_stop: "రికార్డింగ్ ఆపు",
+                    recorder_idle: "నిష్క్రియంగా ఉంది",
+                    recorder_recording: "రికార్డ్ అవుతోంది...",
+                    contacts_title: "విశ్వసనీయ పరిచయాలు",
+                    contacts_desc: "మీరు విశ్వసించే వ్యక్తుల ఫోన్ నంబర్‌లను జోడించండి. అత్యవసర పరిస్థితుల్లో, వారికి హెచ్చరిక పంపవచ్చు.",
+                    contacts_placeholder: "ఫోన్ నంబర్‌ను నమోదు చేయండి",
+                    contacts_add: "జోడించు",
+                    evidence_title: "సాక్ష్యం లాకర్",
+                    evidence_desc: "ఫోటోలు, స్క్రీన్‌షాట్‌లు లేదా పత్రాలను సురక్షితంగా అప్‌లోడ్ చేయండి. మీ సాక్ష్యం ఎన్‌క్రిప్ట్ చేయబడింది మరియు ప్రైవేట్‌గా ఉంటుంది.",
+                    evidence_upload_prompt: "ఫైల్‌లను ఇక్కడ క్లిక్ చేయండి లేదా లాగండి",
+                    footer_disclaimer: "మీ భద్రత కోసం, మొత్తం డేటా ఎన్‌క్రిప్ట్ చేయబడింది. మీరు త్వరగా వెళ్లాలనుకుంటే నిష్క్రమణ బటన్‌ను ఉపయోగించడం గుర్తుంచుకోండి."
+                },
+                mr: { // Marathi
+                    exit_button: "बाहेर पडा",
+                    page_title: "संरक्षण डॅशबोर्ड",
+                    page_quote: "\"सर्वात धाडसी कृत्य म्हणजे स्वतःसाठी विचार करणे. मोठ्याने.\" - कोको चॅनेल",
+                    recorder_title: "व्हॉइस रेकॉर्डर",
+                    recorder_desc: "शांतपणे पार्श्वभूमी ऑडिओ रेकॉर्ड करा. रेकॉर्डिंग एनक्रिप्ट केले जाईल आणि सुरक्षितपणे संग्रहित केले जाईल.",
+                    recorder_start: "रेकॉर्डिंग सुरू करा",
+                    recorder_stop: "रेकॉर्डिंग थांबवा",
+                    recorder_idle: "निष्क्रिय",
+                    recorder_recording: "रेकॉर्डिंग होत आहे...",
+                    contacts_title: "विश्वसनीय संपर्क",
+                    contacts_desc: "तुम्ही विश्वास ठेवता अशा लोकांचे फोन नंबर जोडा. आपत्कालीन परिस्थितीत, त्यांना एक सूचना पाठवली जाऊ शकते.",
+                    contacts_placeholder: "फोन नंबर प्रविष्ट करा",
+                    contacts_add: "जोडा",
+                    evidence_title: "पुरावा लॉकर",
+                    evidence_desc: "फोटो, स्क्रीनशॉट किंवा दस्तऐवज सुरक्षितपणे अपलोड करा. तुमचा पुरावा एनक्रिप्ट केलेला आणि खाजगी आहे.",
+                    evidence_upload_prompt: "येथे फायली क्लिक करा किंवा ड्रॅग करा",
+                    footer_disclaimer: "तुमच्या सुरक्षिततेसाठी, सर्व डेटा एनक्रिप्ट केलेला आहे. तुम्हाला लवकर बाहेर पडायचे असल्यास बाहेर पडा बटण वापरण्याचे लक्षात ठेवा."
+                }
+            };
+
+            // --- INITIALIZATION ---
+            initializeApp() {
+                document.documentElement.setAttribute('data-mode', this.currentMode);
+                this.updateModeToggle();
+                this.updateLanguage();
+                this.renderContacts();
+            }
+
+            // --- EVENT LISTENERS ---
+            setupEventListeners() {
+                document.getElementById('mode-toggle').addEventListener('click', () => this.toggleMode());
+                document.getElementById('language-select').addEventListener('change', (e) => this.setLanguage(e.target.value));
+                document.getElementById('header-exit').addEventListener('click', () => this.quickExit());
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.quickExit(); });
+
+                // Feature Listeners
+                document.getElementById('record-btn').addEventListener('click', () => this.toggleRecording());
+                document.getElementById('add-contact-btn').addEventListener('click', () => this.addContact());
+                document.getElementById('contact-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') this.addContact(); });
+                
+                // File Upload Listeners
+                const uploadArea = document.getElementById('upload-area');
+                const fileInput = document.getElementById('file-input');
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); uploadArea.style.borderColor = 'var(--accent)'; });
+                uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); uploadArea.style.borderColor = 'var(--border)'; });
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadArea.style.borderColor = 'var(--border)';
+                    this.handleFiles(e.dataTransfer.files);
+                });
+                fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+            }
+
+            // --- CORE LOGIC ---
+            toggleMode() {
+                this.currentMode = this.currentMode === 'impact' ? 'calm' : 'impact';
+                localStorage.setItem('voiceguard-mode', this.currentMode);
+                document.documentElement.setAttribute('data-mode', this.currentMode);
+                this.updateModeToggle();
+            }
+
+            updateModeToggle() {
+                document.getElementById('mode-text').textContent = this.currentMode === 'impact' ? 'Calm' : 'Impact';
+            }
+
+            setLanguage(lang) {
+                this.currentLang = lang;
+                localStorage.setItem('voiceguard-lang', lang);
+                this.updateLanguage();
+            }
+
+            updateLanguage() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    const translation = this.i18n[this.currentLang]?.[key] || this.i18n.en[key];
+                    if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+                        el.placeholder = translation;
+                    } else {
+                        el.textContent = translation;
+                    }
+                });
+                document.getElementById('language-select').value = this.currentLang;
+            }
+
+            quickExit() {
+                // This function is designed for maximum safety.
+                // 1. It clears the page content immediately to prevent anything from being seen.
+                document.body.innerHTML = '';
+                
+                // 2. It uses window.location.replace(). This is crucial.
+                // It replaces the current page in the browser's history with the new one.
+                // This means the user CANNOT use the "Back" button to return to this sensitive page.
+                // The previous page is effectively erased from the session history.
+                window.location.replace('https://weather.com');
+            }
+
+            // --- FEATURE-SPECIFIC LOGIC ---
+
+            // Voice Recorder
+            toggleRecording() {
+                this.isRecording = !this.isRecording;
+                const recordBtn = document.getElementById('record-btn');
+                const statusDot = document.getElementById('status-dot');
+                const statusText = document.getElementById('status-text');
+
+                if (this.isRecording) {
+                    recordBtn.setAttribute('data-i18n', 'recorder_stop');
+                    recordBtn.classList.add('btn-danger'); // Visually indicate it's active
+                    statusDot.classList.add('recording');
+                    statusText.setAttribute('data-i18n', 'recorder_recording');
+                } else {
+                    recordBtn.setAttribute('data-i18n', 'recorder_start');
+                    recordBtn.classList.remove('btn-danger');
+                    statusDot.classList.remove('recording');
+                    statusText.setAttribute('data-i18n', 'recorder_idle');
+                }
+                this.updateLanguage(); // Refresh text content
+            }
+
+            // Trusted Contacts
+            addContact() {
+                const contactInput = document.getElementById('contact-input');
+                const newContact = contactInput.value.trim();
+                if (newContact && /^\d+$/.test(newContact)) { // Basic validation for numbers
+                    this.trustedContacts.push(newContact);
+                    localStorage.setItem('voiceguard-contacts', JSON.stringify(this.trustedContacts));
+                    this.renderContacts();
+                    contactInput.value = '';
+                }
+            }
+            
+            removeContact(index) {
+                this.trustedContacts.splice(index, 1);
+                localStorage.setItem('voiceguard-contacts', JSON.stringify(this.trustedContacts));
+                this.renderContacts();
+            }
+
+            renderContacts() {
+                const contactList = document.getElementById('contact-list');
+                contactList.innerHTML = '';
+                this.trustedContacts.forEach((contact, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'contact-item';
+                    li.innerHTML = `
+                        <span>${contact}</span>
+                        <button class="remove-contact-btn" title="Remove contact">&times;</button>
+                    `;
+                    li.querySelector('.remove-contact-btn').addEventListener('click', () => this.removeContact(index));
+                    contactList.appendChild(li);
+                });
+            }
+
+            // Evidence Locker
+            handleFiles(files) {
+                for (const file of files) {
+                    this.uploadedFiles.push(file);
+                }
+                this.renderFiles();
+            }
+
+            removeFile(index) {
+                this.uploadedFiles.splice(index, 1);
+                this.renderFiles();
+            }
+
+            renderFiles() {
+                const fileList = document.getElementById('file-list');
+                fileList.innerHTML = '';
+                this.uploadedFiles.forEach((file, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.innerHTML = `
+                        <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                        <button class="remove-file-btn" title="Remove file">&times;</button>
+                    `;
+                    li.querySelector('.remove-file-btn').addEventListener('click', () => this.removeFile(index));
+                    fileList.appendChild(li);
+                });
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            window.voiceGuardDemo = new VoiceGuardDemoApp();
+        });
+    </script>
+</body>
+</html>
