@@ -108,7 +108,10 @@ class VoiceGuardApp {
             stealth_tip1: "Use incognito/private browsing mode",
             stealth_tip2: "Clear browser history and call logs regularly",
             stealth_tip3: "Use public computers when possible",
-            stealth_tip4: "Create code words with trusted friends"
+            stealth_tip4: "Create code words with trusted friends",
+            chatbot_title: "Asha",
+            chatbot_greeting: "Hello! I'm Asha, your support assistant. How can I help you today?",
+            chatbot_placeholder: "Type a message..."
         },
         hi: {
             warning_title: "सामग्री चेतावनी",
@@ -201,7 +204,10 @@ class VoiceGuardApp {
             stealth_tip1: "गुप्त/निजी ब्राउज़िंग मोड का उपयोग करें",
             stealth_tip2: "नियमित रूप से ब्राउज़र इतिहास और कॉल लॉग साफ़ करें",
             stealth_tip3: "जब संभव हो सार्वजनिक कंप्यूटर का उपयोग करें",
-            stealth_tip4: "विश्वसनीय दोस्तों के साथ कोड वर्ड बनाएं"
+            stealth_tip4: "विश्वसनीय दोस्तों के साथ कोड वर्ड बनाएं",
+            chatbot_title: "आशा",
+            chatbot_greeting: "नमस्ते! मैं आशा हूँ, आपकी सहायक। मैं आज आपकी कैसे मदद कर सकती हूँ?",
+            chatbot_placeholder: "संदेश लिखें..."
         },
         bn: { // Bengali
             warning_title: "বিষয়বস্তু সতর্কতা",
@@ -284,7 +290,10 @@ class VoiceGuardApp {
             stealth_tip1: "ছদ্মবেশী/ব্যক্তিগত ব্রাউজিং মোড ব্যবহার করুন",
             stealth_tip2: "নিয়মিতভাবে ব্রাউজারের ইতিহাস এবং কল লগ সাফ করুন",
             stealth_tip3: "যখন সম্ভব পাবলিক কম্পিউটার ব্যবহার করুন",
-            stealth_tip4: "বিশ্বস্ত বন্ধুদের সাথে কোড শব্দ তৈরি করুন"
+            stealth_tip4: "বিশ্বস্ত বন্ধুদের সাথে কোড শব্দ তৈরি করুন",
+            chatbot_title: "আশা",
+            chatbot_greeting: "নমস্কার! আমি আশা, আপনার সহায়ক। আমি আজ আপনাকে কিভাবে সাহায্য করতে পারি?",
+            chatbot_placeholder: "বার্তা টাইপ করুন..."
         },
         ta: { // Tamil
             warning_title: "உள்ளடக்க எச்சரிக்கை",
@@ -367,7 +376,10 @@ class VoiceGuardApp {
             stealth_tip1: "மறைநிலை/தனிப்பட்ட உலாவல் பயன்முறையைப் பயன்படுத்தவும்",
             stealth_tip2: "உலாவி வரலாறு மற்றும் அழைப்பு பதிவுகளை தவறாமல் அழிக்கவும்",
             stealth_tip3: "முடிந்தவரை பொது கணினிகளைப் பயன்படுத்தவும்",
-            stealth_tip4: "நம்பகமான நண்பர்களுடன் குறியீட்டு வார்த்தைகளை உருவாக்கவும்"
+            stealth_tip4: "நம்பகமான நண்பர்களுடன் குறியீட்டு வார்த்தைகளை உருவாக்கவும்",
+            chatbot_title: "ஆஷா",
+            chatbot_greeting: "வணக்கம்! நான் ஆஷா, உங்கள் ஆதரவு உதவியாளர். இன்று நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+            chatbot_placeholder: "செய்தியை தட்டச்சு செய்யவும்..."
         },
         te: { // Telugu
             warning_title: "కంటెంట్ హెచ్చరిక",
@@ -450,7 +462,10 @@ class VoiceGuardApp {
             stealth_tip1: "అజ్ఞాత/ప్రైవేట్ బ్రౌజింగ్ మోడ్‌ను ఉపయోగించండి",
             stealth_tip2: "బ్రౌజర్ చరిత్ర మరియు కాల్ లాగ్‌లను క్రమం తప్పకుండా క్లియర్ చేయండి",
             stealth_tip3: "వీలైనప్పుడు పబ్లిక్ కంప్యూటర్‌లను ఉపయోగించండి",
-            stealth_tip4: "విశ్వసనీయ స్నేహితులతో కోడ్ పదాలను సృష్టించండి"
+            stealth_tip4: "విశ్వసనీయ స్నేహితులతో కోడ్ పదాలను సృష్టించండి",
+            chatbot_title: "ఆశా",
+            chatbot_greeting: "నమస్కారం! నేను ఆశా, మీ సహాయకారిని. ఈ రోజు నేను మీకు ఎలా సహాయపడగలను?",
+            chatbot_placeholder: "సందేశాన్ని టైప్ చేయండి..."
         },
         mr: { // Marathi
             warning_title: "सामग्री चेतावणी",
@@ -533,7 +548,10 @@ class VoiceGuardApp {
             stealth_tip1: "गुप्त/खाजगी ब्राउझिंग मोड वापरा",
             stealth_tip2: "ब्राउझर इतिहास आणि कॉल लॉग नियमितपणे साफ करा",
             stealth_tip3: "शक्य असेल तेव्हा सार्वजनिक संगणक वापरा",
-            stealth_tip4: "विश्वसनीय मित्रांसह कोड शब्द तयार करा"
+            stealth_tip4: "विश्वसनीय मित्रांसह कोड शब्द तयार करा",
+            chatbot_title: "आशा",
+            chatbot_greeting: "नमस्कार! मी आशा आहे, तुमची सहाय्यक. मी आज तुमची कशी मदत करू शकते?",
+            chatbot_placeholder: "संदेश टाइप करा..."
         }
     };
 
@@ -615,6 +633,21 @@ class VoiceGuardApp {
         document.getElementById('type-filter').addEventListener('change', () => {
             this.filterNGOs();
         });
+
+        // Chatbot listeners
+        const chatbotIcon = document.getElementById('chatbot-icon');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        const chatbotClose = document.getElementById('chatbot-close');
+
+        if (chatbotIcon && chatbotWindow && chatbotClose) {
+            chatbotIcon.addEventListener('click', () => {
+                chatbotWindow.classList.toggle('open');
+            });
+
+            chatbotClose.addEventListener('click', () => {
+                chatbotWindow.classList.remove('open');
+            });
+        }
     }
 
     setupAccessibility() {
@@ -667,12 +700,21 @@ class VoiceGuardApp {
     }
 
     updateLanguage() {
-        const elements = document.querySelectorAll('[data-i18n]');
-        elements.forEach(element => {
+        // Update regular text content
+        document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
             const translation = this.i18n[this.currentLang]?.[key] || this.i18n.en[key];
             if (translation) {
                 element.textContent = translation;
+            }
+        });
+
+        // Update placeholder text
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-i18n-placeholder');
+            const translation = this.i18n[this.currentLang]?.[key] || this.i18n.en[key];
+            if (translation) {
+                element.setAttribute('placeholder', translation);
             }
         });
 

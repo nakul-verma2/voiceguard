@@ -290,6 +290,147 @@
             padding: 3rem 0 2rem;
             margin-top: 4rem;
         }
+
+        /* Chatbot Styles */
+        .chatbot {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 1050;
+        }
+
+        .chatbot-icon {
+            width: 60px;
+            height: 60px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .chatbot-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .chatbot-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .chatbot-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            max-width: 90vw;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            visibility: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+        }
+
+        .chatbot-window.open {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+
+        .chatbot-header {
+            background-color: var(--accent);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-title {
+            font-weight: bold;
+        }
+
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.8;
+            padding: 0;
+        }
+
+        .chatbot-close:hover {
+            opacity: 1;
+        }
+
+        .chatbot-body {
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chatbot-message {
+            padding: 0.5rem 1rem;
+            border-radius: 18px;
+            margin-bottom: 0.5rem;
+            max-width: 80%;
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+
+        .chatbot-message.bot {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+        }
+
+        .chatbot-footer {
+            display: flex;
+            padding: 0.5rem;
+            border-top: 1px solid var(--border);
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        #chatbot-input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            color: var(--fg);
+            padding: 0.5rem;
+        }
+
+        #chatbot-input:focus {
+            outline: none;
+        }
+
+        #chatbot-send {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #chatbot-send:hover {
+            filter: brightness(1.2);
+        }
     </style>
 </head>
 <body>
@@ -354,7 +495,7 @@
                         <h3 data-i18n="contacts_title">Trusted Contacts</h3>
                         <p data-i18n="contacts_desc">Add phone numbers of people you trust. In an emergency, an alert can be sent to them.</p>
                         <div class="input-group">
-                            <input type="tel" id="contact-input" class="form-control" placeholder="Enter phone number" data-i18n="contacts_placeholder">
+                            <input type="tel" id="contact-input" class="form-control" placeholder="Enter phone number" data-i18n-placeholder="contacts_placeholder">
                             <button id="add-contact-btn" class="btn btn-primary" data-i18n="contacts_add">Add</button>
                         </div>
                         <ul id="contact-list" class="contact-list"></ul>
@@ -382,6 +523,32 @@
             <p class="text-muted" data-i18n="footer_disclaimer">For your safety, all data is encrypted. Remember to use the Exit button if you need to leave quickly.</p>
         </div>
     </footer>
+
+    <!-- Asha Chatbot -->
+    <div id="asha-chatbot" class="chatbot">
+        <div class="chatbot-window" id="chatbot-window">
+            <div class="chatbot-header">
+                <span class="chatbot-title" data-i18n="chatbot_title">Asha</span>
+                <button class="chatbot-close" id="chatbot-close" aria-label="Close chat">&times;</button>
+            </div>
+            <div class="chatbot-body" id="chatbot-body">
+                <div class="chatbot-message bot" data-i18n="chatbot_greeting">Hello! I'm Asha, your support assistant. How can I help you today?</div>
+            </div>
+            <div class="chatbot-footer">
+                <input type="text" id="chatbot-input" data-i18n-placeholder="chatbot_placeholder" placeholder="Type a message...">
+                <button id="chatbot-send" aria-label="Send message">
+                    <svg fill="white" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                        <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="chatbot-icon" id="chatbot-icon" role="button" aria-label="Open support chat">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+                <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+            </svg>
+        </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -431,7 +598,10 @@
                     evidence_title: "Evidence Locker",
                     evidence_desc: "Securely upload photos, screenshots, or documents. Your evidence is encrypted and private.",
                     evidence_upload_prompt: "Click or drag files here",
-                    footer_disclaimer: "For your safety, all data is encrypted. Remember to use the Exit button if you need to leave quickly."
+                    footer_disclaimer: "For your safety, all data is encrypted. Remember to use the Exit button if you need to leave quickly.",
+                    chatbot_title: "Asha",
+                    chatbot_greeting: "Hello! I'm Asha, your support assistant. How can I help you today?",
+                    chatbot_placeholder: "Type a message..."
                 },
                 hi: {
                     exit_button: "बाहर निकलें",
@@ -450,7 +620,10 @@
                     evidence_title: "सबूत लॉकर",
                     evidence_desc: "फ़ोटो, स्क्रीनशॉट या दस्तावेज़ सुरक्षित रूप से अपलोड करें। आपके सबूत एन्क्रिप्टेड और निजी हैं।",
                     evidence_upload_prompt: "फ़ाइलों को यहां क्लिक करें या खींचें",
-                    footer_disclaimer: "आपकी सुरक्षा के लिए, सभी डेटा एन्क्रिप्ट किया गया है। यदि आपको जल्दी से बाहर निकलने की आवश्यकता है तो बाहर निकलें बटन का उपयोग करना याद रखें।"
+                    footer_disclaimer: "आपकी सुरक्षा के लिए, सभी डेटा एन्क्रिप्ट किया गया है। यदि आपको जल्दी से बाहर निकलने की आवश्यकता है तो बाहर निकलें बटन का उपयोग करना याद रखें।",
+                    chatbot_title: "आशा",
+                    chatbot_greeting: "नमस्ते! मैं आशा हूँ, आपकी सहायक। मैं आज आपकी कैसे मदद कर सकती हूँ?",
+                    chatbot_placeholder: "संदेश लिखें..."
                 },
                 bn: { // Bengali
                     exit_button: "প্রস্থান",
@@ -469,7 +642,10 @@
                     evidence_title: "প্রমাণ লকার",
                     evidence_desc: "নিরাপদে ফটো, স্ক্রিনশট বা নথি আপলোড করুন। আপনার প্রমাণ এনক্রিপ্ট করা এবং ব্যক্তিগত।",
                     evidence_upload_prompt: "ফাইলগুলি এখানে ক্লিক করুন বা টেনে আনুন",
-                    footer_disclaimer: "আপনার সুরক্ষার জন্য, সমস্ত ডেটা এনক্রিপ্ট করা হয়েছে। আপনার যদি দ্রুত চলে যাওয়ার প্রয়োজন হয় তবে প্রস্থান বোতামটি ব্যবহার করতে ভুলবেন না।"
+                    footer_disclaimer: "আপনার সুরক্ষার জন্য, সমস্ত ডেটা এনক্রিপ্ট করা হয়েছে। আপনার যদি দ্রুত চলে যাওয়ার প্রয়োজন হয় তবে প্রস্থান বোতামটি ব্যবহার করতে ভুলবেন না।",
+                    chatbot_title: "আশা",
+                    chatbot_greeting: "নমস্কার! আমি আশা, আপনার সহায়ক। আমি আজ আপনাকে কিভাবে সাহায্য করতে পারি?",
+                    chatbot_placeholder: "বার্তা টাইপ করুন..."
                 },
                 ta: { // Tamil
                     exit_button: "வெளியேறு",
@@ -488,7 +664,10 @@
                     evidence_title: "சான்று லாக்கர்",
                     evidence_desc: "புகைப்படங்கள், ஸ்கிரீன் ஷாட்கள் அல்லது ஆவணங்களை பாதுகாப்பாக பதிவேற்றவும். உங்கள் சான்றுகள் குறியாக்கம் செய்யப்பட்டு தனிப்பட்டவை.",
                     evidence_upload_prompt: "கோப்புகளை இங்கே கிளிக் செய்யவும் அல்லது இழுக்கவும்",
-                    footer_disclaimer: "உங்கள் பாதுகாப்பிற்காக, எல்லா தரவும் குறியாக்கம் செய்யப்பட்டுள்ளது. நீங்கள் விரைவாக வெளியேற வேண்டும் என்றால் வெளியேறு பொத்தானைப் பயன்படுத்த நினைவில் கொள்ளுங்கள்."
+                    footer_disclaimer: "உங்கள் பாதுகாப்பிற்காக, எல்லா தரவும் குறியாக்கம் செய்யப்பட்டுள்ளது. நீங்கள் விரைவாக வெளியேற வேண்டும் என்றால் வெளியேறு பொத்தானைப் பயன்படுத்த நினைவில் கொள்ளுங்கள்.",
+                    chatbot_title: "ஆஷா",
+                    chatbot_greeting: "வணக்கம்! நான் ஆஷா, உங்கள் ஆதரவு உதவியாளர். இன்று நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+                    chatbot_placeholder: "செய்தியை தட்டச்சு செய்யவும்..."
                 },
                 te: { // Telugu
                     exit_button: "నిష్క్రమించు",
@@ -507,7 +686,10 @@
                     evidence_title: "సాక్ష్యం లాకర్",
                     evidence_desc: "ఫోటోలు, స్క్రీన్‌షాట్‌లు లేదా పత్రాలను సురక్షితంగా అప్‌లోడ్ చేయండి. మీ సాక్ష్యం ఎన్‌క్రిప్ట్ చేయబడింది మరియు ప్రైవేట్‌గా ఉంటుంది.",
                     evidence_upload_prompt: "ఫైల్‌లను ఇక్కడ క్లిక్ చేయండి లేదా లాగండి",
-                    footer_disclaimer: "మీ భద్రత కోసం, మొత్తం డేటా ఎన్‌క్రిప్ట్ చేయబడింది. మీరు త్వరగా వెళ్లాలనుకుంటే నిష్క్రమణ బటన్‌ను ఉపయోగించడం గుర్తుంచుకోండి."
+                    footer_disclaimer: "మీ భద్రత కోసం, మొత్తం డేటా ఎన్‌క్రిప్ట్ చేయబడింది. మీరు త్వరగా వెళ్లాలనుకుంటే నిష్క్రమణ బటన్‌ను ఉపయోగించడం గుర్తుంచుకోండి.",
+                    chatbot_title: "ఆశా",
+                    chatbot_greeting: "నమస్కారం! నేను ఆశా, మీ సహాయకారిని. ఈ రోజు నేను మీకు ఎలా సహాయపడగలను?",
+                    chatbot_placeholder: "సందేశాన్ని టైప్ చేయండి..."
                 },
                 mr: { // Marathi
                     exit_button: "बाहेर पडा",
@@ -526,7 +708,10 @@
                     evidence_title: "पुरावा लॉकर",
                     evidence_desc: "फोटो, स्क्रीनशॉट किंवा दस्तऐवज सुरक्षितपणे अपलोड करा. तुमचा पुरावा एनक्रिप्ट केलेला आणि खाजगी आहे.",
                     evidence_upload_prompt: "येथे फायली क्लिक करा किंवा ड्रॅग करा",
-                    footer_disclaimer: "तुमच्या सुरक्षिततेसाठी, सर्व डेटा एनक्रिप्ट केलेला आहे. तुम्हाला लवकर बाहेर पडायचे असल्यास बाहेर पडा बटण वापरण्याचे लक्षात ठेवा."
+                    footer_disclaimer: "तुमच्या सुरक्षिततेसाठी, सर्व डेटा एनक्रिप्ट केलेला आहे. तुम्हाला लवकर बाहेर पडायचे असल्यास बाहेर पडा बटण वापरण्याचे लक्षात ठेवा.",
+                    chatbot_title: "आशा",
+                    chatbot_greeting: "नमस्कार! मी आशा आहे, तुमची सहाय्यक. मी आज तुमची कशी मदत करू शकते?",
+                    chatbot_placeholder: "संदेश टाइप करा..."
                 }
             };
 
@@ -563,6 +748,21 @@
                     this.handleFiles(e.dataTransfer.files);
                 });
                 fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+
+                // Chatbot listeners
+                const chatbotIcon = document.getElementById('chatbot-icon');
+                const chatbotWindow = document.getElementById('chatbot-window');
+                const chatbotClose = document.getElementById('chatbot-close');
+
+                if (chatbotIcon && chatbotWindow && chatbotClose) {
+                    chatbotIcon.addEventListener('click', () => {
+                        chatbotWindow.classList.toggle('open');
+                    });
+
+                    chatbotClose.addEventListener('click', () => {
+                        chatbotWindow.classList.remove('open');
+                    });
+                }
             }
 
             // --- CORE LOGIC ---
@@ -587,12 +787,15 @@
                 document.querySelectorAll('[data-i18n]').forEach(el => {
                     const key = el.getAttribute('data-i18n');
                     const translation = this.i18n[this.currentLang]?.[key] || this.i18n.en[key];
-                    if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
-                        el.placeholder = translation;
-                    } else {
-                        el.textContent = translation;
-                    }
+                    el.textContent = translation;
                 });
+                
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    const translation = this.i18n[this.currentLang]?.[key] || this.i18n.en[key];
+                    el.setAttribute('placeholder', translation);
+                });
+
                 document.getElementById('language-select').value = this.currentLang;
             }
 
