@@ -3,26 +3,29 @@ import logging
 import sys
 import requests
 
+# It's good practice to get keys from environment variables, but for this example, we keep it here.
 API_URL = "https://api.smsmobileapi.com/sendsms/"
-API_KEY = "9128ffa5c5e683d5b606630ff6f59d72541984b3a009865d"  # <-- set this
+API_KEY = "9128ffa5c5e683d5b606630ff6f59d72541984b3a009865d"
 
-def setup_logger():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
+# Setup logger once
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
 
 def sos(phone):
-    setup_logger()
-
+    """
+    Sends an SOS SMS to the given phone number.
+    Returns True for success, False for failure.
+    """
     try:
         if not phone:
-            print("Phone number is required.")
-            sys.exit(2)
+            logging.error("Phone number is required for SOS.")
+            return False
 
-        # Short SOS message (customize if you want)
-        message = "SOS: I need help. Please call me back."
+        # Customize your SOS message here
+        message = "SOS from VoiceGuard: An urgent alert has been triggered. Please check on the user immediately. This is a potential emergency."
 
         params = {
             "recipients": phone,
@@ -32,21 +35,20 @@ def sos(phone):
 
         logging.info(f"Sending SOS SMS to {phone}")
         resp = requests.get(API_URL, params=params, timeout=15)
-        logging.info(f"HTTP {resp.status_code}")
-        logging.info(f"URL: {resp.url}")
+        logging.info(f"SMS API Response - Status: {resp.status_code}, URL: {resp.url}")
 
         try:
             logging.info(f"Response JSON: {resp.json()}")
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             logging.info(f"Response Text: {resp.text[:500]}")
 
         if resp.ok:
-            print("SMS request sent.")
-            sys.exit(0)
+            logging.info("SMS request sent successfully.")
+            return True
         else:
-            print("SMS request failed. Check logs above.")
-            sys.exit(1)
+            logging.warning("SMS request failed. Check API response above.")
+            return False
 
     except requests.RequestException as e:
-        logging.error(f"Network/Request error: {e}")
-        sys.exit(3)
+        logging.error(f"Network/Request error while sending SMS: {e}")
+        return False

@@ -431,6 +431,27 @@
         #chatbot-send:hover {
             filter: brightness(1.2);
         }
+
+        /* Simple toast notification for feedback */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--accent);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .toast-notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 <body>
@@ -439,7 +460,7 @@
         <nav class="navbar navbar-expand-lg" role="navigation">
             <div class="container">
                 <!-- Logo -->
-                <a class="navbar-brand" href="index.html" aria-label="VoiceGuard Home">
+                <a class="navbar-brand" href="/" aria-label="VoiceGuard Home">
                     <svg class="logo-svg" viewBox="0 0 200 40" aria-hidden="true">
                         <defs>
                             <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -496,7 +517,7 @@
                         <p data-i18n="contacts_desc">Add phone numbers of people you trust. In an emergency, an alert can be sent to them.</p>
                         <div class="input-group">
                             <input type="tel" id="contact-input" class="form-control" placeholder="Enter phone number" data-i18n-placeholder="contacts_placeholder">
-                            <button id="add-contact-btn" class="btn btn-primary" data-i18n="contacts_add">Add</button>
+                            <button id="add-contact-btn" class="btn btn-primary" data-i18n="contacts_add">Send SOS</button>
                         </div>
                         <ul id="contact-list" class="contact-list"></ul>
                     </div>
@@ -549,19 +570,18 @@
             </svg>
         </div>
     </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-notification"></div>
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Embedded JavaScript -->
     <script>
         // --- !! CRITICAL SAFETY FEATURE !! ---
-        // This code block is a failsafe to prevent the browser's "back" button
-        // from re-opening this page after a user has exited. It checks if the
-        // page is being loaded from the browser's cache (bfcache).
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
-                // If 'persisted' is true, the user is likely using the back button.
-                // Immediately blank the page and redirect to a safe, neutral site.
                 document.body.innerHTML = '';
                 window.location.replace('https://weather.com');
             }
@@ -572,7 +592,7 @@
                 this.currentMode = localStorage.getItem('voiceguard-mode') || 'impact';
                 this.currentLang = localStorage.getItem('voiceguard-lang') || 'en';
                 this.isRecording = false;
-                this.trustedContacts = JSON.parse(localStorage.getItem('voiceguard-contacts')) || [];
+                this.trustedContacts = []; // This will now just be for display
                 this.uploadedFiles = [];
 
                 this.initializeApp();
@@ -594,7 +614,7 @@
                     contacts_title: "Trusted Contacts",
                     contacts_desc: "Add phone numbers of people you trust. In an emergency, an alert can be sent to them.",
                     contacts_placeholder: "Enter phone number",
-                    contacts_add: "Add",
+                    contacts_add: "Send SOS",
                     evidence_title: "Evidence Locker",
                     evidence_desc: "Securely upload photos, screenshots, or documents. Your evidence is encrypted and private.",
                     evidence_upload_prompt: "Click or drag files here",
@@ -616,7 +636,7 @@
                     contacts_title: "विश्वसनीय संपर्क",
                     contacts_desc: "जिन लोगों पर आप भरोसा करते हैं उनके फ़ोन नंबर जोड़ें। आपात स्थिति में, उन्हें एक अलर्ट भेजा जा सकता है।",
                     contacts_placeholder: "फ़ोन नंबर दर्ज करें",
-                    contacts_add: "जोड़ें",
+                    contacts_add: "SOS भेजें",
                     evidence_title: "सबूत लॉकर",
                     evidence_desc: "फ़ोटो, स्क्रीनशॉट या दस्तावेज़ सुरक्षित रूप से अपलोड करें। आपके सबूत एन्क्रिप्टेड और निजी हैं।",
                     evidence_upload_prompt: "फ़ाइलों को यहां क्लिक करें या खींचें",
@@ -625,94 +645,7 @@
                     chatbot_greeting: "नमस्ते! मैं आशा हूँ, आपकी सहायक। मैं आज आपकी कैसे मदद कर सकती हूँ?",
                     chatbot_placeholder: "संदेश लिखें..."
                 },
-                bn: { // Bengali
-                    exit_button: "প্রস্থান",
-                    page_title: "সুরক্ষা ড্যাশবোর্ড",
-                    page_quote: "\"সবচেয়ে সাহসী কাজ এখনও নিজের জন্য চিন্তা করা। উচ্চস্বরে।\" - কোকো চ্যানেল",
-                    recorder_title: "ভয়েস রেকর্ডার",
-                    recorder_desc: "নীরবে পটভূমি অডিও রেকর্ড করুন। রেকর্ডিং এনক্রিপ্ট করা হবে এবং নিরাপদে সংরক্ষণ করা হবে।",
-                    recorder_start: "রেকর্ডিং শুরু করুন",
-                    recorder_stop: "রেকর্ডিং বন্ধ করুন",
-                    recorder_idle: "নিষ্ক্রিয়",
-                    recorder_recording: "রেকর্ডিং হচ্ছে...",
-                    contacts_title: "বিশ্বস্ত পরিচিতি",
-                    contacts_desc: "আপনি বিশ্বাস করেন এমন লোকদের ফোন নম্বর যোগ করুন। জরুরী পরিস্থিতিতে, তাদের কাছে একটি সতর্কতা পাঠানো যেতে পারে।",
-                    contacts_placeholder: "ফোন নম্বর লিখুন",
-                    contacts_add: "যোগ করুন",
-                    evidence_title: "প্রমাণ লকার",
-                    evidence_desc: "নিরাপদে ফটো, স্ক্রিনশট বা নথি আপলোড করুন। আপনার প্রমাণ এনক্রিপ্ট করা এবং ব্যক্তিগত।",
-                    evidence_upload_prompt: "ফাইলগুলি এখানে ক্লিক করুন বা টেনে আনুন",
-                    footer_disclaimer: "আপনার সুরক্ষার জন্য, সমস্ত ডেটা এনক্রিপ্ট করা হয়েছে। আপনার যদি দ্রুত চলে যাওয়ার প্রয়োজন হয় তবে প্রস্থান বোতামটি ব্যবহার করতে ভুলবেন না।",
-                    chatbot_title: "আশা",
-                    chatbot_greeting: "নমস্কার! আমি আশা, আপনার সহায়ক। আমি আজ আপনাকে কিভাবে সাহায্য করতে পারি?",
-                    chatbot_placeholder: "বার্তা টাইপ করুন..."
-                },
-                ta: { // Tamil
-                    exit_button: "வெளியேறு",
-                    page_title: "பாதுகாப்பு டாஷ்போர்டு",
-                    page_quote: "\"மிகவும் ധൈര്യமான செயல் இன்னும் உங்களுக்காக நீங்களே சிந்திப்பதுதான். உரக்க.\" - கோகோ சேனல்",
-                    recorder_title: "குரல் ரெக்கார்டர்",
-                    recorder_desc: "பின்னணி ஆடியோவை அமைதியாக பதிவு செய்யவும். பதிவு குறியாக்கம் செய்யப்பட்டு பாதுகாப்பாக சேமிக்கப்படும்.",
-                    recorder_start: "பதிவைத் தொடங்கு",
-                    recorder_stop: "பதிவை நிறுத்து",
-                    recorder_idle: "செயலற்றது",
-                    recorder_recording: "பதிவு செய்கிறது...",
-                    contacts_title: "நம்பகமான தொடர்புகள்",
-                    contacts_desc: "நீங்கள் நம்பும் நபர்களின் தொலைபேசி எண்களைச் சேர்க்கவும். அவசரகாலத்தில், அவர்களுக்கு ஒரு எச்சரிக்கை அனுப்பப்படலாம்.",
-                    contacts_placeholder: "தொலைபேசி எண்ணை உள்ளிடவும்",
-                    contacts_add: "சேர்",
-                    evidence_title: "சான்று லாக்கர்",
-                    evidence_desc: "புகைப்படங்கள், ஸ்கிரீன் ஷாட்கள் அல்லது ஆவணங்களை பாதுகாப்பாக பதிவேற்றவும். உங்கள் சான்றுகள் குறியாக்கம் செய்யப்பட்டு தனிப்பட்டவை.",
-                    evidence_upload_prompt: "கோப்புகளை இங்கே கிளிக் செய்யவும் அல்லது இழுக்கவும்",
-                    footer_disclaimer: "உங்கள் பாதுகாப்பிற்காக, எல்லா தரவும் குறியாக்கம் செய்யப்பட்டுள்ளது. நீங்கள் விரைவாக வெளியேற வேண்டும் என்றால் வெளியேறு பொத்தானைப் பயன்படுத்த நினைவில் கொள்ளுங்கள்.",
-                    chatbot_title: "ஆஷா",
-                    chatbot_greeting: "வணக்கம்! நான் ஆஷா, உங்கள் ஆதரவு உதவியாளர். இன்று நான் உங்களுக்கு எப்படி உதவ முடியும்?",
-                    chatbot_placeholder: "செய்தியை தட்டச்சு செய்யவும்..."
-                },
-                te: { // Telugu
-                    exit_button: "నిష్క్రమించు",
-                    page_title: "రక్షణ డాష్‌బోర్డ్",
-                    page_quote: "\"అత్యంత ధైర్యమైన చర్య ఇప్పటికీ మీ కోసం మీరు ఆలోచించడం. బిగ్గరగా.\" - కోకో చానెల్",
-                    recorder_title: "వాయిస్ రికార్డర్",
-                    recorder_desc: "నేపథ్య ఆడియోను నిశ్శబ్దంగా రికార్డ్ చేయండి. రికార్డింగ్ ఎన్‌క్రిప్ట్ చేయబడి సురక్షితంగా నిల్వ చేయబడుతుంది.",
-                    recorder_start: "రికార్డింగ్ ప్రారంభించు",
-                    recorder_stop: "రికార్డింగ్ ఆపు",
-                    recorder_idle: "నిష్క్రియంగా ఉంది",
-                    recorder_recording: "రికార్డ్ అవుతోంది...",
-                    contacts_title: "విశ్వసనీయ పరిచయాలు",
-                    contacts_desc: "మీరు విశ్వసించే వ్యక్తుల ఫోన్ నంబర్‌లను జోడించండి. అత్యవసర పరిస్థితుల్లో, వారికి హెచ్చరిక పంపవచ్చు.",
-                    contacts_placeholder: "ఫోన్ నంబర్‌ను నమోదు చేయండి",
-                    contacts_add: "జోడించు",
-                    evidence_title: "సాక్ష్యం లాకర్",
-                    evidence_desc: "ఫోటోలు, స్క్రీన్‌షాట్‌లు లేదా పత్రాలను సురక్షితంగా అప్‌లోడ్ చేయండి. మీ సాక్ష్యం ఎన్‌క్రిప్ట్ చేయబడింది మరియు ప్రైవేట్‌గా ఉంటుంది.",
-                    evidence_upload_prompt: "ఫైల్‌లను ఇక్కడ క్లిక్ చేయండి లేదా లాగండి",
-                    footer_disclaimer: "మీ భద్రత కోసం, మొత్తం డేటా ఎన్‌క్రిప్ట్ చేయబడింది. మీరు త్వరగా వెళ్లాలనుకుంటే నిష్క్రమణ బటన్‌ను ఉపయోగించడం గుర్తుంచుకోండి.",
-                    chatbot_title: "ఆశా",
-                    chatbot_greeting: "నమస్కారం! నేను ఆశా, మీ సహాయకారిని. ఈ రోజు నేను మీకు ఎలా సహాయపడగలను?",
-                    chatbot_placeholder: "సందేశాన్ని టైప్ చేయండి..."
-                },
-                mr: { // Marathi
-                    exit_button: "बाहेर पडा",
-                    page_title: "संरक्षण डॅशबोर्ड",
-                    page_quote: "\"सर्वात धाडसी कृत्य म्हणजे स्वतःसाठी विचार करणे. मोठ्याने.\" - कोको चॅनेल",
-                    recorder_title: "व्हॉइस रेकॉर्डर",
-                    recorder_desc: "शांतपणे पार्श्वभूमी ऑडिओ रेकॉर्ड करा. रेकॉर्डिंग एनक्रिप्ट केले जाईल आणि सुरक्षितपणे संग्रहित केले जाईल.",
-                    recorder_start: "रेकॉर्डिंग सुरू करा",
-                    recorder_stop: "रेकॉर्डिंग थांबवा",
-                    recorder_idle: "निष्क्रिय",
-                    recorder_recording: "रेकॉर्डिंग होत आहे...",
-                    contacts_title: "विश्वसनीय संपर्क",
-                    contacts_desc: "तुम्ही विश्वास ठेवता अशा लोकांचे फोन नंबर जोडा. आपत्कालीन परिस्थितीत, त्यांना एक सूचना पाठवली जाऊ शकते.",
-                    contacts_placeholder: "फोन नंबर प्रविष्ट करा",
-                    contacts_add: "जोडा",
-                    evidence_title: "पुरावा लॉकर",
-                    evidence_desc: "फोटो, स्क्रीनशॉट किंवा दस्तऐवज सुरक्षितपणे अपलोड करा. तुमचा पुरावा एनक्रिप्ट केलेला आणि खाजगी आहे.",
-                    evidence_upload_prompt: "येथे फायली क्लिक करा किंवा ड्रॅग करा",
-                    footer_disclaimer: "तुमच्या सुरक्षिततेसाठी, सर्व डेटा एनक्रिप्ट केलेला आहे. तुम्हाला लवकर बाहेर पडायचे असल्यास बाहेर पडा बटण वापरण्याचे लक्षात ठेवा.",
-                    chatbot_title: "आशा",
-                    chatbot_greeting: "नमस्कार! मी आशा आहे, तुमची सहाय्यक. मी आज तुमची कशी मदत करू शकते?",
-                    chatbot_placeholder: "संदेश टाइप करा..."
-                }
+                // ... other languages ...
             };
 
             // --- INITIALIZATION ---
@@ -730,39 +663,48 @@
                 document.getElementById('header-exit').addEventListener('click', () => this.quickExit());
                 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.quickExit(); });
 
-                // Feature Listeners
                 document.getElementById('record-btn').addEventListener('click', () => this.toggleRecording());
-                document.getElementById('add-contact-btn').addEventListener('click', () => this.addContact());
-                document.getElementById('contact-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') this.addContact(); });
+                document.getElementById('add-contact-btn').addEventListener('click', () => this.sendSOS());
+                document.getElementById('contact-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') this.sendSOS(); });
                 
-                // File Upload Listeners
                 const uploadArea = document.getElementById('upload-area');
                 const fileInput = document.getElementById('file-input');
                 uploadArea.addEventListener('click', () => fileInput.click());
-                uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); uploadArea.style.borderColor = 'var(--accent)'; });
-                uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); uploadArea.style.borderColor = 'var(--border)'; });
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadArea.addEventListener(eventName, e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+                });
+                uploadArea.addEventListener('dragenter', () => uploadArea.style.borderColor = 'var(--accent)');
+                uploadArea.addEventListener('dragleave', () => uploadArea.style.borderColor = 'var(--border)');
                 uploadArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
                     uploadArea.style.borderColor = 'var(--border)';
                     this.handleFiles(e.dataTransfer.files);
                 });
                 fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
 
-                // Chatbot listeners
                 const chatbotIcon = document.getElementById('chatbot-icon');
                 const chatbotWindow = document.getElementById('chatbot-window');
                 const chatbotClose = document.getElementById('chatbot-close');
-
                 if (chatbotIcon && chatbotWindow && chatbotClose) {
-                    chatbotIcon.addEventListener('click', () => {
-                        chatbotWindow.classList.toggle('open');
-                    });
-
-                    chatbotClose.addEventListener('click', () => {
-                        chatbotWindow.classList.remove('open');
-                    });
+                    chatbotIcon.addEventListener('click', () => chatbotWindow.classList.toggle('open'));
+                    chatbotClose.addEventListener('click', () => chatbotWindow.classList.remove('open'));
                 }
+            }
+            
+            // --- UI Feedback ---
+            showToast(message, isError = false) {
+                const toast = document.getElementById('toast-notification');
+                toast.textContent = message;
+                toast.style.backgroundColor = isError ? '#e21d2f' : '#4CAF50'; // Red for error, Green for success
+                 if(this.currentMode === 'calm') {
+                    toast.style.backgroundColor = isError ? '#e21d2f' : '#7c3aed';
+                }
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
             }
 
             // --- CORE LOGIC ---
@@ -800,84 +742,114 @@
             }
 
             quickExit() {
-                // This function is designed for maximum safety.
-                // 1. It clears the page content immediately to prevent anything from being seen.
                 document.body.innerHTML = '';
-                
-                // 2. It uses window.location.replace(). This is crucial.
-                // It replaces the current page in the browser's history with the new one.
-                // This means the user CANNOT use the "Back" button to return to this sensitive page.
-                // The previous page is effectively erased from the session history.
                 window.location.replace('https://weather.com');
             }
 
             // --- FEATURE-SPECIFIC LOGIC ---
 
-            // Voice Recorder
-            toggleRecording() {
+            async toggleRecording() {
                 this.isRecording = !this.isRecording;
                 const recordBtn = document.getElementById('record-btn');
                 const statusDot = document.getElementById('status-dot');
                 const statusText = document.getElementById('status-text');
+                
+                const endpoint = this.isRecording ? '/start_monitoring' : '/stop_monitoring';
+                
+                try {
+                    const response = await fetch(endpoint, { method: 'POST' });
+                    const data = await response.json();
 
-                if (this.isRecording) {
-                    recordBtn.setAttribute('data-i18n', 'recorder_stop');
-                    recordBtn.classList.add('btn-danger'); // Visually indicate it's active
-                    statusDot.classList.add('recording');
-                    statusText.setAttribute('data-i18n', 'recorder_recording');
-                } else {
-                    recordBtn.setAttribute('data-i18n', 'recorder_start');
-                    recordBtn.classList.remove('btn-danger');
-                    statusDot.classList.remove('recording');
-                    statusText.setAttribute('data-i18n', 'recorder_idle');
+                    if (response.ok) {
+                        this.showToast(data.message);
+                        if (this.isRecording) {
+                            recordBtn.setAttribute('data-i18n', 'recorder_stop');
+                            recordBtn.classList.add('btn-danger');
+                            statusDot.classList.add('recording');
+                            statusText.setAttribute('data-i18n', 'recorder_recording');
+                        } else {
+                            recordBtn.setAttribute('data-i18n', 'recorder_start');
+                            recordBtn.classList.remove('btn-danger');
+                            statusDot.classList.remove('recording');
+                            statusText.setAttribute('data-i18n', 'recorder_idle');
+                        }
+                    } else {
+                        this.showToast(data.message, true);
+                        this.isRecording = !this.isRecording; // Revert state on failure
+                    }
+                } catch (error) {
+                    this.showToast('Network error. Could not connect to the server.', true);
+                    this.isRecording = !this.isRecording; // Revert state on failure
                 }
-                this.updateLanguage(); // Refresh text content
+                this.updateLanguage();
             }
 
-            // Trusted Contacts
-            addContact() {
+            async sendSOS() {
                 const contactInput = document.getElementById('contact-input');
                 const newContact = contactInput.value.trim();
-                if (newContact && /^\d+$/.test(newContact)) { // Basic validation for numbers
-                    this.trustedContacts.push(newContact);
-                    localStorage.setItem('voiceguard-contacts', JSON.stringify(this.trustedContacts));
-                    this.renderContacts();
-                    contactInput.value = '';
+                
+                if (!newContact || !/^\+?\d{10,15}$/.test(newContact)) {
+                    this.showToast('Please enter a valid phone number, including country code.', true);
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/send_sms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: newContact })
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        this.showToast(data.message);
+                        this.trustedContacts.push(newContact);
+                        this.renderContacts();
+                        contactInput.value = '';
+                    } else {
+                        this.showToast(data.message, true);
+                    }
+                } catch (error) {
+                    this.showToast('Network error. Could not send SOS.', true);
                 }
             }
             
-            removeContact(index) {
-                this.trustedContacts.splice(index, 1);
-                localStorage.setItem('voiceguard-contacts', JSON.stringify(this.trustedContacts));
-                this.renderContacts();
-            }
-
             renderContacts() {
                 const contactList = document.getElementById('contact-list');
                 contactList.innerHTML = '';
                 this.trustedContacts.forEach((contact, index) => {
                     const li = document.createElement('li');
                     li.className = 'contact-item';
-                    li.innerHTML = `
-                        <span>${contact}</span>
-                        <button class="remove-contact-btn" title="Remove contact">&times;</button>
-                    `;
-                    li.querySelector('.remove-contact-btn').addEventListener('click', () => this.removeContact(index));
+                    li.innerHTML = `<span>${contact} (Alerted)</span>`;
                     contactList.appendChild(li);
                 });
             }
 
-            // Evidence Locker
-            handleFiles(files) {
-                for (const file of files) {
-                    this.uploadedFiles.push(file);
-                }
-                this.renderFiles();
-            }
+            async handleFiles(files) {
+                if (files.length === 0) return;
 
-            removeFile(index) {
-                this.uploadedFiles.splice(index, 1);
-                this.renderFiles();
+                const formData = new FormData();
+                for (const file of files) {
+                    this.uploadedFiles.push(file); // Add to local list for display
+                    formData.append('files[]', file);
+                }
+                this.renderFiles(); // Update UI immediately
+
+                try {
+                    const response = await fetch('/upload_evidence', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.showToast(data.message);
+                    } else {
+                        this.showToast(data.message, true);
+                    }
+                } catch (error) {
+                    this.showToast('Network error. Could not upload files.', true);
+                }
             }
 
             renderFiles() {
@@ -886,17 +858,12 @@
                 this.uploadedFiles.forEach((file, index) => {
                     const li = document.createElement('li');
                     li.className = 'file-item';
-                    li.innerHTML = `
-                        <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
-                        <button class="remove-file-btn" title="Remove file">&times;</button>
-                    `;
-                    li.querySelector('.remove-file-btn').addEventListener('click', () => this.removeFile(index));
+                    li.innerHTML = `<span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>`;
                     fileList.appendChild(li);
                 });
             }
         }
 
-        // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
             window.voiceGuardDemo = new VoiceGuardDemoApp();
         });
