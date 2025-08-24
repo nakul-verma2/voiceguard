@@ -8,8 +8,6 @@ from utils.audio_buffer import AudioBuffer
 from utils.speech_analysis import SpeechAnalyzer
 from utils.sos import sos
 
-
-
 async def main():
     print("🛡️  VoiceGuard - Step 5: Emergency SMS ")
     print("=" * 50)
