@@ -2,3 +2,7 @@ pyaudio
 numpy
 webrtcvad
 soundfile
+flask
+whisper
+openai
+dotenv
