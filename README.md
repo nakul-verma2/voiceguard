@@ -96,9 +96,11 @@ To get a local copy up and running, follow these simple steps.
 4.  **Set up environment variables:**
     Create a `.env` file in the root directory and add your API keys:
     ```env
-    OPENAI_BASE_URL="[https://openrouter.ai/api/v1](https://openrouter.ai/api/v1)"
-    OPENAI_API_KEY="YOUR_OPENROUTER_API_KEY"
-    MODEL_ID="anthropic/claude-3-haiku"
+    OPENAI_API_KEY=sk-...    # your secret key
+    OPENAI_BASE_URL=https://openrouter.ai/api/v1
+    MODEL_ID=mistralai/mistral-nemo:free   # free multilingual model(We can use GPT[OpenAI] also)
+    PORT=5000                              # Flask port
+    EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
     ```
 
 #### Running the Application
