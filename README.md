@@ -7,8 +7,6 @@
 
   [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=githubactions)](https://github.com/nakul-verma2/voiceguard)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-  [![GitHub stars](https://img.shields.io/github/stars/nakul-verma2/voiceguard?style=for-the-badge&logo=github)](https://github.com/nakul-verma2/voiceguard/stargazers)
-  [![GitHub forks](https://img.shields.io/github/forks/nakul-verma2/voiceguard?style=for-the-badge&logo=github)](https://github.com/nakul-verma2/voiceguard/network)
 
 </div>
 
