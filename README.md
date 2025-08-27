@@ -32,24 +32,6 @@
 
 ---
 
-### 📸 Screenshots & Demo
-
-Here's a look at the VoiceGuard application in action.
-
-<p align="center">
-  <img src="[LINK_TO_SCREENSHOT_1]" alt="Dashboard Screenshot" width="80%"/>
-</p>
-
-<p align="center">
-  <img src="[LINK_TO_SCREENSHOT_2]" alt="Disguised Interface" width="80%"/>
-</p>
-
-<p align="center">
-  <img src="[LINK_TO_SCREENSHOT_3]" alt="MultiLingual Support" width="80%"/>
-</p>
-
----
-
 ### 🎥 Watch the Demo
 
 <p align="center">
@@ -57,10 +39,31 @@ Here's a look at the VoiceGuard application in action.
 </p>
 
 <p align="center">
-  <a href="[LINK_TO_YOUR_DEMO_VIDEO]" title="Watch the Demo Video">
-    <img src="[LINK_TO_VIDEO_THUMBNAIL_IMAGE]" alt="VoiceGuard Demo" width="70%">
+  <a href="https://youtu.be/dGfcnviHOPQ" title="Watch the Demo Video">
+    <img src="https://github.com/nakul-verma2/voiceguard/blob/edc3e3a3e87be0db4f1669598d7a43611ac05bd9/screenshots/Thumbnail.png" alt="VoiceGuard Demo" width="70%">
   </a>
 </p>
+
+---
+
+### 📸 Screenshots & Demo
+
+Here's a look at the VoiceGuard application in action.
+
+<p align="center">
+  <img src="https://github.com/nakul-verma2/voiceguard/blob/edc3e3a3e87be0db4f1669598d7a43611ac05bd9/screenshots/Screenshot%202025-08-27%20184642.png" width="80%"/>
+</p>
+<br>
+
+<p align="center">
+  <img src="https://github.com/nakul-verma2/voiceguard/blob/edc3e3a3e87be0db4f1669598d7a43611ac05bd9/screenshots/Screenshot%202025-08-27%20184731.png" alt="Disguised Interface" width="80%"/>
+</p>
+<br>
+
+<p align="center">
+  <img src="https://github.com/nakul-verma2/voiceguard/blob/edc3e3a3e87be0db4f1669598d7a43611ac05bd9/screenshots/Screenshot%202025-08-27%20190609.png" alt="MultiLingual Support" width="80%"/>
+</p>
+<br>
 
 ---
 
