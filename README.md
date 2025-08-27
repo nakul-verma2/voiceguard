@@ -32,6 +32,38 @@
 
 ---
 
+### 📸 Screenshots & Demo
+
+Here's a look at the VoiceGuard application in action.
+
+<p align="center">
+  <img src="[LINK_TO_SCREENSHOT_1]" alt="Dashboard Screenshot" width="80%"/>
+</p>
+
+<p align="center">
+  <img src="[LINK_TO_SCREENSHOT_2]" alt="Disguised Interface" width="80%"/>
+</p>
+
+<p align="center">
+  <img src="[LINK_TO_SCREENSHOT_3]" alt="MultiLingual Support" width="80%"/>
+</p>
+
+---
+
+### 🎥 Watch the Demo
+
+<p align="center">
+  Click the thumbnail below to see a full walkthrough of VoiceGuard's features.
+</p>
+
+<p align="center">
+  <a href="[LINK_TO_YOUR_DEMO_VIDEO]" title="Watch the Demo Video">
+    <img src="[LINK_TO_VIDEO_THUMBNAIL_IMAGE]" alt="VoiceGuard Demo" width="70%">
+  </a>
+</p>
+
+---
+
 ### ⚙️ How It Works
 
 1.  **Audio Capture**: The system monitors background audio in real-time, using Voice Activity Detection (VAD) to identify human speech.
