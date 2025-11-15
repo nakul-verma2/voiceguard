@@ -1,5 +1,9 @@
 import os
+from dotenv import load_dotenv
 import logging
+
+# --- Load Environment Variables ---
+load_dotenv()
 import time
 import threading
 import numpy as np
@@ -12,7 +16,8 @@ from utils.incident import IncidentRecorder
 from utils.audio_buffer import AudioBuffer
 from utils.speech_analysis import SpeechAnalyzer
 # --- Import the chatbot function ---
-from utils.chatbot import chat as chatbot_response
+from utils.chatbot import WomenSafetyChatbot
+import asyncio
 
 
 app = Flask(__name__,
@@ -243,20 +248,51 @@ def upload_evidence():
         'filenames': successful_uploads
     }), 200
 
+
+
+# Initialize chatbot
+API_KEY = os.getenv("OPENAI_API_KEY", "your-key-here")
+chatbot_instance = WomenSafetyChatbot(api_key=API_KEY)
+
 # --- Chatbot Route ---
 @app.route('/chat', methods=['POST'])
 def chat_route():
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        message = data.get('message')
+        language = data.get('language', 'english')
+        
+        if not user_id or not message:
+            return jsonify({'error': 'user_id and message are required.'}), 400
+        
+        response = chatbot_instance.chat(user_id, message, language=language)
+        
+        if response.get('success'):
+            return jsonify(response), 200
+        else:
+            return jsonify(response), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/stats', methods=['GET'])
+def stats_route():
+    """Get chatbot statistics"""
+    stats = chatbot_instance.get_stats()
+    return jsonify(stats), 200
+
+@app.route('/clear-history', methods=['POST'])
+def clear_history_route():
+    """Clear user history"""
     data = request.get_json()
     user_id = data.get('user_id')
-    message = data.get('message')
-    language = data.get('language', 'auto')
     
-    if not user_id or not message:
-        return jsonify({'error': 'user_id and message are required.'}), 400
-        
-    response = chatbot_response(user_id, message, language=language)
-    return jsonify(response)
-
+    if not user_id:
+        return jsonify({'error': 'user_id is required'}), 400
+    
+    chatbot_instance.clear_user_history(user_id)
+    return jsonify({'success': True, 'message': 'History cleared'}), 200
 
 # --- Main Execution ---
 if __name__ == '__main__':

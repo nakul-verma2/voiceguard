@@ -1,181 +1,276 @@
+# utils/chatbot.py
+
+import chromadb
+import requests
 import os
-import time
-import asyncio
-from openai import OpenAI
-from dotenv import load_dotenv
-from collections import defaultdict, deque
-import threading
-from datetime import datetime, timedelta
+import logging
+from typing import Dict, List, Optional
+from datetime import datetime
 
-load_dotenv()
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Initialize OpenAI client for OpenRouter
-client = OpenAI(
-    base_url=os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1"),
-    api_key=os.getenv("OPENAI_API_KEY"),
-)
-model_id = os.getenv("MODEL_ID")
-
-# Session management
-user_sessions = defaultdict(lambda: {
-    'history': deque(maxlen=20),  # Keep last 20 messages
-    'last_activity': datetime.now(),
-    'language_preference': 'auto'
-})
-
-SESSION_TIMEOUT = timedelta(hours=2)
-
-def cleanup_sessions():
-    """Remove inactive sessions to save memory"""
-    while True:
-        current_time = datetime.now()
-        inactive_sessions = [
-            user_id for user_id, session in user_sessions.items()
-            if current_time - session['last_activity'] > SESSION_TIMEOUT
-        ]
-        for user_id in inactive_sessions:
-            del user_sessions[user_id]
-        time.sleep(1800)  # Check every 30 minutes
-
-# Start cleanup thread
-cleanup_thread = threading.Thread(target=cleanup_sessions, daemon=True)
-cleanup_thread.start()
-
-# Language-specific system prompts
-SYSTEM_PROMPTS = {
-    'english': {
-        'role': (
-            "You are a Women Safety and Indian Laws Consultant. "
-            "You specialize in guiding women on their legal rights, safety measures, "
-            "and available support systems in India..."
-        ),
-        'rules': [
-            "Always respond in English unless asked otherwise.",
-            "Short replies for casual or general chats.",
-            "Detailed replies only when explicitly asked.",
-            "Provide emergency contacts in India: 112, 1091, 181.",
-        ]
-    },
-    'hindi': {
-        'role': (
-            "आप एक महिला सुरक्षा और भारतीय कानूनों की सलाहकार हैं..."
-        ),
-        'rules': [
-            "हमेशा हिंदी में जवाब दें जब तक अंग्रेज़ी न मांगे।",
-            "सामान्य चैट के लिए छोटे उत्तर दें।",
-            "आवश्यक होने पर आपातकालीन नंबर दें: 112, 1091, 181।",
-        ]
-    }
-}
-
-def detect_language(text: str) -> str:
-    """Simple language detection based on script"""
-    hindi_chars = sum(1 for char in text if '\u0900' <= char <= '\u097F')
-    total_chars = len([char for char in text if char.isalpha()])
-    if total_chars == 0:
-        return 'english'
-    hindi_ratio = hindi_chars / total_chars
-    return 'hindi' if hindi_ratio > 0.3 else 'english'
-
-def build_conversation_context(user_id, current_message, language):
-    """Build conversation context with history"""
-    session = user_sessions[user_id]
-    system_prompt = SYSTEM_PROMPTS[language]
+class WomenSafetyChatbot:
+    """Women Safety Legal Chatbot with RAG using ChromaDB and OpenRouter"""
     
-    messages = [
-        {
-            "role": "system", 
-            "content": f"{system_prompt['role']}\n\nRules:\n" + "\n".join(f"- {rule}" for rule in system_prompt['rules'])
-        }
-    ]
-    messages.extend(session['history'])
-    messages.append({"role": "user", "content": current_message})
-    return messages
-
-def update_session_history(user_id, user_message, ai_response):
-    """Update user session with new messages"""
-    session = user_sessions[user_id]
-    session['history'].append({"role": "user", "content": user_message})
-    session['history'].append({"role": "assistant", "content": ai_response})
-    session['last_activity'] = datetime.now()
-
-# --- Main Chat Function ---
-def chat(user_id: str, message: str, language: str = "auto") -> dict:
-    """Get chatbot response for a message"""
-    if not message:
-        return {"error": "No message provided"}
+    def __init__(self, api_key: str, chroma_path: str = "./chroma_db"):
+        """
+        Initialize the chatbot
+        
+        Args:
+            api_key: OpenRouter API key
+            chroma_path: Path to ChromaDB persistent storage
+        """
+        try:
+            self.api_key = api_key
+            self.chroma_path = chroma_path
+            self.model = "meta-llama/llama-3.3-70b-instruct:free"
+            
+            # Initialize ChromaDB
+            self.client = chromadb.PersistentClient(path=chroma_path)
+            self.collection = self.client.get_collection("women_safety_laws")
+            
+            # Store conversation history per user
+            self.user_histories = {}
+            
+            logger.info("✅ Chatbot initialized successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize chatbot: {str(e)}")
+            raise
     
-    # --- Language Handling ---
-    lang_map = {
-        'en': 'english',
-        'hi': 'hindi',
-    }
+    def search_laws(self, query: str, n_results: int = 3) -> List[str]:
+        """
+        Search ChromaDB for relevant law sections
+        
+        Args:
+            query: User query to search for
+            n_results: Number of results to retrieve
+            
+        Returns:
+            List of relevant document snippets
+        """
+        try:
+            results = self.collection.query(
+                query_texts=[query],
+                n_results=n_results
+            )
+            documents = results.get('documents', [[]])[0]
+            
+            if not documents:
+                logger.warning(f"No documents found for query: {query}")
+                return ["No specific legal context found."]
+            
+            return documents
+        except Exception as e:
+            logger.error(f"❌ Error searching laws: {str(e)}")
+            return ["Unable to retrieve legal context."]
     
-    effective_language = lang_map.get(language, 'english')
-    if language == 'auto':
-        effective_language = detect_language(message)
+    def build_system_prompt(self) -> str:
+        """Build the system prompt for the LLM"""
+        return """You are a women's safety legal assistant for India.
 
-    try:
-        messages = build_conversation_context(user_id, message, effective_language)
-        response = client.chat.completions.create(
-            model=model_id,
-            messages=messages,
-            temperature=0.7,
-            max_tokens=800,
-            stream=False
-        )
-        ai_response = response.choices[0].message.content
-        update_session_history(user_id, message, ai_response)
+CORE RULES:
+1. Answer questions about women's safety, rights, and Indian law
+2. For unrelated questions, politely redirect to your specialty
+3. Use the legal context provided to give accurate answers
+4. Include relevant section numbers when applicable
+5. Be empathetic, supportive, and respectful
+6. Respond in the same language as the user (English/Hindi/Hinglish)
+
+TONE:
+- Warm and conversational for casual chat
+- Detailed and precise for legal questions
+- Empathetic for emergency situations"""
+    
+    def build_user_message(self, query: str, legal_context: str) -> str:
+        """Build the user message with legal context"""
+        return f"""LEGAL CONTEXT:
+{legal_context}
+
+USER QUESTION: {query}
+
+Provide helpful, accurate information based on the context above."""
+    
+    def call_openrouter(self, messages: List[Dict], temperature: float = 0.7) -> Optional[str]:
+        """
+        Call OpenRouter API with error handling
+        
+        Args:
+            messages: Message history for the API
+            temperature: Model temperature (0.3-1.0)
+            
+        Returns:
+            Model response or None if error
+        """
+        try:
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "max_tokens": 500
+                },
+                timeout=30
+            )
+            
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if 'choices' not in data or not data['choices']:
+                logger.error("❌ Invalid response structure from OpenRouter")
+                return None
+            
+            answer = data['choices'][0]['message']['content']
+            return answer
+            
+        except requests.exceptions.Timeout:
+            logger.error("❌ OpenRouter API request timed out")
+            return None
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"❌ HTTP error from OpenRouter: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"❌ Error calling OpenRouter: {str(e)}")
+            return None
+    
+    def add_disclaimer(self, answer: str) -> str:
+        """Add legal disclaimer if not present"""
+        if "Women Helpline 181" not in answer:
+            answer += "\n\nThis is legal information, not professional advice. For urgent help: Call Women Helpline 181"
+        return answer
+    
+    def get_user_history(self, user_id: str, max_messages: int = 4) -> List[Dict]:
+        """
+        Get conversation history for a user
+        
+        Args:
+            user_id: Unique user identifier
+            max_messages: Maximum number of messages to retrieve
+            
+        Returns:
+            List of conversation messages
+        """
+        if user_id not in self.user_histories:
+            self.user_histories[user_id] = []
+        
+        return self.user_histories[user_id][-max_messages:]
+    
+    def save_to_history(self, user_id: str, user_message: str, bot_response: str):
+        """Save user message and bot response to history"""
+        if user_id not in self.user_histories:
+            self.user_histories[user_id] = []
+        
+        self.user_histories[user_id].append({
+            "role": "user",
+            "content": user_message,
+            "timestamp": datetime.now().isoformat()
+        })
+        self.user_histories[user_id].append({
+            "role": "assistant",
+            "content": bot_response,
+            "timestamp": datetime.now().isoformat()
+        })
+    
+    def chat(self, user_id: str, message: str, language: str = "english") -> Dict:
+        """
+        Main chat function
+        
+        Args:
+            user_id: Unique user identifier
+            message: User message
+            language: Language preference (english/hindi/hinglish)
+            
+        Returns:
+            Dictionary with response and metadata
+        """
+        try:
+            # Validate inputs
+            if not user_id or not message:
+                logger.warning("❌ Missing user_id or message")
+                return {
+                    "error": "user_id and message are required",
+                    "success": False
+                }
+            
+            message = message.strip()
+            
+            if len(message) == 0:
+                return {
+                    "error": "Message cannot be empty",
+                    "success": False
+                }
+            
+            logger.info(f"📨 Processing message from user {user_id}: {message[:50]}...")
+            
+            # Search for relevant laws
+            legal_docs = self.search_laws(message)
+            context = "\n\n".join(legal_docs)
+            
+            # Build messages array
+            messages = [
+                {"role": "system", "content": self.build_system_prompt()}
+            ]
+            
+            # Add conversation history
+            history = self.get_user_history(user_id)
+            messages.extend(history)
+            
+            # Add current message
+            user_msg = self.build_user_message(message, context)
+            messages.append({"role": "user", "content": user_msg})
+            
+            # Get response from LLM
+            response = self.call_openrouter(messages)
+            
+            if response is None:
+                logger.error("❌ Failed to get response from OpenRouter")
+                return {
+                    "error": "Failed to generate response. Please try again.",
+                    "success": False
+                }
+            
+            # Add disclaimer
+            response = self.add_disclaimer(response)
+            
+            # Save to history
+            self.save_to_history(user_id, message, response)
+            
+            logger.info(f"✅ Response generated for user {user_id}")
+            
+            return {
+                "success": True,
+                "response": response,
+                "user_id": user_id,
+                "language": language,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Unexpected error in chat: {str(e)}")
+            return {
+                "error": "An unexpected error occurred. Please try again.",
+                "success": False,
+                "details": str(e)
+            }
+    
+    def clear_user_history(self, user_id: str):
+        """Clear conversation history for a user"""
+        if user_id in self.user_histories:
+            del self.user_histories[user_id]
+            logger.info(f"✅ Cleared history for user {user_id}")
+    
+    def get_stats(self) -> Dict:
+        """Get chatbot statistics"""
         return {
-            "response": ai_response,
-            "language": effective_language,
-            "user_id": user_id,
-            "session_length": len(user_sessions[user_id]['history'])
+            "active_users": len(self.user_histories),
+            "total_messages": sum(len(h) for h in self.user_histories.values()),
+            "model": self.model,
+            "chroma_path": self.chroma_path
         }
-    except Exception as e:
-        return {"error": str(e)}
-
-# --- Utility Functions ---
-def get_history(user_id: str):
-    if user_id not in user_sessions:
-        return {"history": [], "message": "No history found"}
-    session = user_sessions[user_id]
-    return {
-        "history": list(session['history']),
-        "last_activity": session['last_activity'].isoformat(),
-        "session_length": len(session['history'])
-    }
-
-def clear_history(user_id: str):
-    if user_id in user_sessions:
-        user_sessions[user_id]['history'].clear()
-        return {"message": "History cleared successfully"}
-    return {"message": "No history found for user"}
-
-def get_sessions():
-    sessions_info = {
-        user_id: {
-            "message_count": len(session['history']),
-            "last_activity": session['last_activity'].isoformat(),
-            "language_preference": session.get('language_preference', 'auto')
-        }
-        for user_id, session in user_sessions.items()
-    }
-    return {
-        "active_sessions": len(user_sessions),
-        "sessions": sessions_info
-    }
-
-def health_check():
-    return {
-        "status": "healthy",
-        "active_sessions": len(user_sessions),
-        "timestamp": datetime.now().isoformat(),
-        "model": model_id
-    }
-
-# --- Example usage if run standalone ---
-if __name__ == "__main__":
-    print("🚀 Chatbot logic ready (no Flask)")
-    res = chat("test_user", "Hi, I need help regarding domestic violence.")
-    print(res)
