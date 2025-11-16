@@ -3,3 +3,5 @@ incidents
 evidence
 .env
 .venv
+chroma_db
+query_bot.py

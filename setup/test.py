@@ -18,7 +18,7 @@ def test_chatbot():
     # Step 1: Initialize chatbot
     print("\n[1] Initializing chatbot...")
     try:
-        api_key = "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"
+        api_key = "api"
         chatbot = WomenSafetyChatbot(api_key=api_key, chroma_path="./chroma_db")
         print("✅ Chatbot initialized successfully")
     except Exception as e:

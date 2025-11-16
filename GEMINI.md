@@ -1,26 +1,33 @@
-# VoiceGuard: AI-Powered Domestic Violence Detection
+# Project Overview
 
-## Project Overview
+This project, **VoiceGuard**, is a Python-based AI-powered domestic violence detection system. It is designed to identify and intervene in instances of domestic violence by analyzing real-time audio for patterns of distress, aggression, and violence. The system provides a lifeline to victims by connecting them with immediate help from emergency services, trusted contacts, and support organizations.
 
-VoiceGuard is a Python-based web application designed to detect and intervene in instances of domestic violence. It uses real-time audio analysis to identify patterns of distress, aggression, and violence, and can automatically send SOS alerts to emergency contacts.
+The project consists of a Flask backend that handles audio processing, threat detection, and chatbot functionality. The frontend is built with HTML, CSS, and JavaScript, providing a user interface for interacting with the system.
 
-The application is built with a Flask backend and a simple HTML/CSS/JavaScript frontend. The core functionality involves:
+## Key Technologies
 
-*   **Real-time Audio Monitoring:** A background thread continuously captures audio from the microphone.
-*   **Voice Activity Detection (VAD):** The `webrtcvad` library is used to detect human speech in the audio stream.
-*   **Speech-to-Text:** The `whisper` library transcribes the detected speech into text.
-*   **Threat Analysis:** The transcribed text is analyzed for keywords associated with threats and aggression.
-*   **Emergency Alerts:** If a high threat level is detected, the application can send SMS alerts via Twilio (the `sos` utility is not fully shown, but this is inferred).
-*   **Web Interface:** The Flask application provides a web interface to start and stop monitoring, configure emergency contacts, and upload evidence files.
+*   **Backend**: Python, Flask, OpenAI, PyAudio, WebRTCVAD, SoundFile, Whisper
+*   **Frontend**: HTML, CSS, JavaScript
+*   **Database**: ChromaDB
+*   **AI Models**: `meta-llama/llama-3.3-70b-instruct:free` (for chatbot), `whisper` (for speech-to-text)
 
-## Building and Running
+## Architecture
 
-### 1. Prerequisites
+The application follows a client-server architecture. The Flask server exposes a set of REST APIs that the frontend client consumes. The core functionality is divided into two main parts:
+
+1.  **Real-time Audio Monitoring**: A background thread continuously captures audio from the microphone. It uses a Voice Activity Detector (VAD) to identify speech and then analyzes the audio for signs of distress or aggression. If a high-threat situation is detected, the system automatically sends SOS alerts to pre-defined emergency contacts.
+2.  **AI-Powered Chatbot**: The application includes a chatbot named "Asha" that provides guidance, support, and answers to user queries in real-time. The chatbot uses a Retrieval-Augmented Generation (RAG) approach, where it retrieves relevant legal information from a ChromaDB database before generating a response. The database is populated with information from various Indian legal documents related to women's safety.
+
+# Building and Running
+
+To get a local copy up and running, follow these steps:
+
+## Prerequisites
 
 *   Python 3.8+
 *   `pip` package manager
 
-### 2. Installation
+## Installation
 
 1.  **Clone the repository:**
     ```sh
@@ -54,19 +61,22 @@ The application is built with a Flask backend and a simple HTML/CSS/JavaScript f
     EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
     ```
 
-### 3. Running the Application
+## Running the Application
 
-1.  **Start the Flask server:**
+1.  **Set up the ChromaDB database:**
+    ```sh
+    python setup_chromadb.py
+    ```
+
+2.  **Start the Flask server:**
     ```sh
     python app.py
     ```
 
-2.  Open your web browser and navigate to `http://127.0.0.1:5000`.
+3.  Open your web browser and navigate to `http://127.0.0.1:5000`.
 
-## Development Conventions
+# Development Conventions
 
-*   **Modular Structure:** The application is organized into several modules within the `utils` directory, each responsible for a specific task (e.g., `audio.py`, `vad.py`, `speech_analysis.py`).
-*   **Configuration:** The application uses a `config.json` file for basic configuration and a `.env` file for sensitive data like API keys.
-*   **Logging:** The application uses the `logging` module to log events and errors.
-*   **Frontend:** The frontend is composed of simple HTML, CSS, and JavaScript files located in the `templates` directory.
-*   **Dependencies:** Python dependencies are managed with a `requirements.txt` file.
+*   **Code Style**: The Python code generally follows the PEP 8 style guide.
+*   **Testing**: There is a `test.py` file, which suggests that the project has some tests. To run the tests, you can likely run `python test.py`.
+*   **Contributions**: The `README.md` file includes a section on how to contribute to the project. It encourages forking the repository, creating a feature branch, and opening a pull request.
