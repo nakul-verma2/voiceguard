@@ -269,6 +269,7 @@ def chat_route():
         response = chatbot_instance.chat(user_id, message, language=language)
         
         if response.get('success'):
+            logging.info(f"Chatbot timing for user {user_id}: DB Search: {response.get('db_search_time_ms')}ms, API Call: {response.get('api_call_time_ms')}ms, Total: {response.get('overall_processing_time_ms')}ms")
             return jsonify(response), 200
         else:
             return jsonify(response), 400

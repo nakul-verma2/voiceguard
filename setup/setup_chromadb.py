@@ -12,7 +12,7 @@ collection = client.get_or_create_collection(
 )
 
 # Load PDFs
-data_folder = "data"
+data_folder = "./data"
 pdf_files = [
     "BNS_2023.pdf",
     "Constitution_India.pdf",

@@ -6,6 +6,7 @@ import os
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -191,6 +192,9 @@ Provide helpful, accurate information based on the context above."""
             Dictionary with response and metadata
         """
         try:
+            # Start overall timer
+            overall_start_time = time.time()
+
             # Validate inputs
             if not user_id or not message:
                 logger.warning("❌ Missing user_id or message")
@@ -209,8 +213,12 @@ Provide helpful, accurate information based on the context above."""
             
             logger.info(f"📨 Processing message from user {user_id}: {message[:50]}...")
             
-            # Search for relevant laws
+            # Start DB search timer
+            db_search_start_time = time.time()
             legal_docs = self.search_laws(message)
+            db_search_end_time = time.time()
+            db_search_time_ms = round((db_search_end_time - db_search_start_time) * 1000)
+            
             context = "\n\n".join(legal_docs)
             
             # Build messages array
@@ -226,14 +234,20 @@ Provide helpful, accurate information based on the context above."""
             user_msg = self.build_user_message(message, context)
             messages.append({"role": "user", "content": user_msg})
             
-            # Get response from LLM
+            # Start API call timer
+            api_call_start_time = time.time()
             response = self.call_openrouter(messages)
+            api_call_end_time = time.time()
+            api_call_time_ms = round((api_call_end_time - api_call_start_time) * 1000)
             
             if response is None:
                 logger.error("❌ Failed to get response from OpenRouter")
                 return {
                     "error": "Failed to generate response. Please try again.",
-                    "success": False
+                    "success": False,
+                    "db_search_time_ms": db_search_time_ms,
+                    "api_call_time_ms": api_call_time_ms,
+                    "overall_processing_time_ms": round((time.time() - overall_start_time) * 1000)
                 }
             
             # Add disclaimer
@@ -244,12 +258,18 @@ Provide helpful, accurate information based on the context above."""
             
             logger.info(f"✅ Response generated for user {user_id}")
             
+            overall_end_time = time.time()
+            overall_processing_time_ms = round((overall_end_time - overall_start_time) * 1000)
+
             return {
                 "success": True,
                 "response": response,
                 "user_id": user_id,
                 "language": language,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
+                "db_search_time_ms": db_search_time_ms,
+                "api_call_time_ms": api_call_time_ms,
+                "overall_processing_time_ms": overall_processing_time_ms
             }
             
         except Exception as e:
@@ -257,7 +277,8 @@ Provide helpful, accurate information based on the context above."""
             return {
                 "error": "An unexpected error occurred. Please try again.",
                 "success": False,
-                "details": str(e)
+                "details": str(e),
+                "overall_processing_time_ms": round((time.time() - overall_start_time) * 1000)
             }
     
     def clear_user_history(self, user_id: str):
