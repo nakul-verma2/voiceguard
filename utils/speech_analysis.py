@@ -7,6 +7,7 @@ import tempfile
 import soundfile as sf
 import os
 import re
+import logging
 
 class SpeechAnalyzer:
     def __init__(self, model_size="base"):
@@ -14,12 +15,12 @@ class SpeechAnalyzer:
         Initialize Whisper model
         model_size: tiny, base, small, medium, large
         """
-        print(f"🤖 Loading Whisper model ({model_size})...")
+        logging.info(f"🤖 Loading Whisper model ({model_size})...")
         try:
             self.model = whisper.load_model(model_size)
-            print(f"✅ Whisper model loaded successfully")
+            logging.info(f"✅ Whisper model loaded successfully")
         except Exception as e:
-            print(f"❌ Error loading Whisper: {e}")
+            logging.error(f"❌ Error loading Whisper: {e}")
             self.model = None
         
         # Aggressive/abusive keywords for Indian context

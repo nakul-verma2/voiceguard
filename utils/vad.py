@@ -4,6 +4,7 @@ Voice Activity Detection utilities for VoiceGuard
 import webrtcvad
 import numpy as np
 from collections import deque
+import logging
 
 class VoiceActivityDetector:
     def __init__(self, sample_rate=16000, aggressiveness=3):
@@ -44,7 +45,7 @@ class VoiceActivityDetector:
                     speech_detected = True
                     
             except Exception as e:
-                print(f"VAD error: {e}")
+                logging.error(f"VAD error: {e}")
                 self.speech_frames.append(False)
         
         return speech_detected

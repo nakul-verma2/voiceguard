@@ -5,4 +5,7 @@ soundfile
 flask
 whisper
 openai
-dotenv
+python-dotenv
+pymongo[srv]
+cloudinary
+dnspython

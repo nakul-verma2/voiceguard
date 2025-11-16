@@ -97,14 +97,16 @@ Here's a look at the VoiceGuard application in action.
 
 ### 🚀 Getting Started
 
-To get a local copy up and running, follow these simple steps.
+To get a local copy up and running, follow these steps.
 
-#### Prerequisites
+#### 1. Prerequisites
 
-* Python 3.8+
-* `pip` package manager
+*   Python 3.8+
+*   `pip` package manager
+*   A [Google Cloud](https://cloud.google.com/) account with an active project.
+*   A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) account.
 
-#### Installation
+#### 2. Initial Setup
 
 1.  **Clone the repository:**
     ```sh
@@ -128,24 +130,73 @@ To get a local copy up and running, follow these simple steps.
     pip install -r requirements.txt
     ```
 
-4.  **Set up environment variables:**
-    Create a `.env` file in the root directory and add your API keys:
+#### 3. Cloud Services Setup
+
+**A. MongoDB Atlas (Database)**
+
+1.  **Create a Free Cluster:**
+    *   Log in to your MongoDB Atlas account.
+    *   Create a new project and then build a new database.
+    *   Choose the **M0 (Free)** shared cluster. Select a region and give your cluster a name.
+
+2.  **Create a Database User:**
+    *   Under "Database Access," create a new database user. Use a secure password and save it.
+
+3.  **Whitelist IP Address:**
+    *   Under "Network Access," add your current IP address to the IP access list. For development, the "Allow Access from Anywhere" (`0.0.0.0/0`) option is easiest.
+
+4.  **Get Connection String:**
+    *   Go to your database dashboard and click "Connect."
+    *   Choose "Drivers" and select "Python."
+    *   Copy the **connection string (URI)**.
+
+**B. Cloudinary (File Storage)**
+
+1.  **Create a Free Account:**
+    *   Go to the Cloudinary website and sign up for a free account. You should not need to enter any payment information.
+
+2.  **Find Your Credentials:**
+    *   After signing up, you will be taken to your account's Dashboard.
+    *   At the top, you will see your **Cloud Name**, **API Key**, and **API Secret**.
+    *   Even easier, Cloudinary provides a single string that contains all of this. Look for the **"API Environment variable"** field. It will look like `cloudinary://<api_key>:<api_secret>@<cloud_name>`.
+    *   **Copy this entire string.**
+
+#### 4. Environment Variables
+
+1.  Create a `.env` file in the root directory of the project.
+2.  Add the following variables to your `.env` file, pasting in the values you copied from MongoDB Atlas and Cloudinary:
+
     ```env
-    OPENAI_API_KEY=sk-...    # your secret key
+    # --- OpenAI/LLM Keys ---
+    OPENAI_API_KEY=sk-...
     OPENAI_BASE_URL=https://openrouter.ai/api/v1
-    MODEL_ID=mistralai/mistral-nemo:free   # free multilingual model(We can use GPT[OpenAI] also)
-    PORT=5000                              # Flask port
+    MODEL_ID=mistralai/mistral-nemo:free
     EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+
+    # --- MongoDB Atlas ---
+    MONGO_URI="mongodb+srv://<your_username>:<your_password>@your_cluster_url/?retryWrites=true&w=majority"
+    MONGO_DB_NAME="voiceguard_db"
+
+    # --- Cloudinary ---
+    CLOUDINARY_URL="cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>"
+
+    # --- Server ---
+    PORT=5000
     ```
 
-#### Running the Application
+#### 5. Running the Application
 
-1.  **Start the Flask server:**
+1.  **Set up the ChromaDB database (for RAG):**
+    ```sh
+    python setup/setup_chromadb.py
+    ```
+
+2.  **Start the Flask server:**
     ```sh
     python app.py
     ```
 
-2.  Open your web browser and navigate to `http://127.0.0.1:5000`.
+3.  Open your web browser and navigate to `http://127.0.0.1:5000`.
 
 ---
 

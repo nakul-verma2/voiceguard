@@ -7,6 +7,7 @@ import os
 import numpy as np
 import soundfile as sf
 from datetime import datetime
+import logging
 
 class IncidentRecorder:
     def __init__(self, incidents_dir="incidents", audio_dir="evidence"):
@@ -18,9 +19,7 @@ class IncidentRecorder:
         os.makedirs(incidents_dir, exist_ok=True)
         os.makedirs(audio_dir, exist_ok=True)
         
-        print(f"📁 Incident recorder initialized")
-        print(f"   Incidents: {incidents_dir}/")
-        print(f"   Audio evidence: {audio_dir}/")
+        logging.info(f"📁 Incident recorder initialized. Incidents: {incidents_dir}/, Audio evidence: {audio_dir}/")
     
     def record_incident(self, threat_level, volume, speech_confidence, audio_data, 
                        speech_analysis=None, sample_rate=16000):
@@ -45,7 +44,7 @@ class IncidentRecorder:
             audio_saved = True
             audio_duration = len(audio_data) / sample_rate
         except Exception as e:
-            print(f"❌ Error saving audio: {e}")
+            logging.error(f"❌ Error saving audio: {e}")
             audio_saved = False
             audio_duration = 0
         
@@ -72,29 +71,33 @@ class IncidentRecorder:
             with open(json_file, 'w') as f:
                 json.dump(incident_data, f, indent=2)
             
-            print(f"🚨 INCIDENT RECORDED: {incident_id}")
-            print(f"   Threat: {threat_level}")
-            print(f"   Volume: {volume:.0f}")
-            print(f"   Confidence: {speech_confidence:.2f}")
+            log_message = (
+                f"🚨 INCIDENT RECORDED: {incident_id}\n"
+                f"   Threat: {threat_level}\n"
+                f"   Volume: {volume:.0f}\n"
+                f"   Confidence: {speech_confidence:.2f}"
+            )
             
-            # Print speech analysis if available
+            # Add speech analysis to log if available
             if speech_analysis and speech_analysis["transcription"]["text"]:
                 text = speech_analysis["transcription"]["text"]
                 text_threat = speech_analysis["text_analysis"]["threat_level"]
                 keywords = speech_analysis["text_analysis"]["keywords_found"]
                 
-                print(f"   📝 Transcript: '{text}'")
-                print(f"   🎯 Text Threat: {text_threat}")
+                log_message += f"\n   📝 Transcript: '{text}'"
+                log_message += f"\n   🎯 Text Threat: {text_threat}"
                 if keywords:
-                    print(f"   ⚠️  Keywords: {', '.join(keywords)}")
+                    log_message += f"\n   ⚠️  Keywords: {', '.join(keywords)}"
             
-            print(f"   💾 Evidence: {audio_file if audio_saved else 'Failed to save'}")
-            print(f"   ⏱️  Duration: {audio_duration:.1f}s")
+            log_message += f"\n   💾 Evidence: {audio_file if audio_saved else 'Failed to save'}"
+            log_message += f"\n   ⏱️  Duration: {audio_duration:.1f}s"
+            
+            logging.info(log_message)
             
             return incident_data
             
         except Exception as e:
-            print(f"❌ Error saving incident: {e}")
+            logging.error(f"❌ Error saving incident: {e}")
             return None
     
     def get_incident_summary(self):
@@ -108,7 +111,7 @@ class IncidentRecorder:
                         with open(os.path.join(self.incidents_dir, filename), 'r') as f:
                             incidents.append(json.load(f))
                     except Exception as e:
-                        print(f"Error reading {filename}: {e}")
+                        logging.error(f"Error reading {filename}: {e}")
         
         return {
             "total_incidents": len(incidents),

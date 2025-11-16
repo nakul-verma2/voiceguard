@@ -6,6 +6,7 @@ import numpy as np
 import threading
 import queue
 import time
+import logging
 
 class AudioCapture:
     def __init__(self, sample_rate=16000, chunk_size=1024):
@@ -17,7 +18,7 @@ class AudioCapture:
     def start_recording(self):
         """Start capturing audio"""
         if self.is_recording:
-            print("Already recording!")
+            logging.warning("Already recording!")
             return
             
         self.is_recording = True
@@ -34,7 +35,7 @@ class AudioCapture:
             frames_per_buffer=self.chunk_size
         )
         
-        print("🎤 Audio recording started...")
+        logging.info("🎤 Audio recording started...")
         
         def record_loop():
             while self.is_recording:
@@ -57,4 +58,4 @@ class AudioCapture:
     def stop_recording(self):
         """Stop recording"""
         self.is_recording = False
-        print("🛑 Audio recording stopped")
+        logging.info("🛑 Audio recording stopped")

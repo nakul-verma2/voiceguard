@@ -5,3 +5,4 @@ evidence
 .venv
 chroma_db
 query_bot.py
+temp_uploads

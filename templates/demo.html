@@ -459,6 +459,17 @@
             opacity: 1;
             visibility: visible;
         }
+
+        /* Evidence Locker Statuses */
+        .file-status {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: auto;
+            padding-left: 1rem;
+        }
+        .file-status.uploading { color: var(--muted); }
+        .file-status.success { color: #28a745; }
+        .file-status.failed { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -601,6 +612,7 @@
                 this.isRecording = false;
                 this.trustedContacts = []; // This will now just be for display
                 this.uploadedFiles = [];
+                this.fileStatuses = {}; // To track upload status
                 // --- Chatbot User ID ---
                 this.chatbotUserId = this.getChatbotUserId();
 
@@ -848,12 +860,16 @@
             async handleFiles(files) {
                 if (files.length === 0) return;
 
+                const newFiles = Array.from(files);
+                this.uploadedFiles.push(...newFiles);
+                
+                // Set initial status to "uploading" for new files
+                newFiles.forEach(file => { this.fileStatuses[file.name] = 'uploading'; });
+                this.renderFiles();
+
                 const formData = new FormData();
-                for (const file of files) {
-                    this.uploadedFiles.push(file); // Add to local list for display
-                    formData.append('files[]', file);
-                }
-                this.renderFiles(); // Update UI immediately
+                newFiles.forEach(file => { formData.append('files[]', file); });
+                formData.append('user_id', this.chatbotUserId);
 
                 try {
                     const response = await fetch('/upload_evidence', {
@@ -863,22 +879,43 @@
                     const data = await response.json();
                     
                     if (response.ok) {
+                        // Update statuses based on server response
+                        data.successful_files.forEach(name => { this.fileStatuses[name] = 'success'; });
+                        data.failed_files.forEach(name => { this.fileStatuses[name] = 'failed'; });
                         this.showToast(data.message);
                     } else {
-                        this.showToast(data.message, true);
+                        // If the whole request fails, mark all new files as failed
+                        newFiles.forEach(file => { this.fileStatuses[file.name] = 'failed'; });
+                        this.showToast(data.message || 'An unknown error occurred during upload.', true);
                     }
                 } catch (error) {
+                    // If there's a network error, mark all new files as failed
+                    newFiles.forEach(file => { this.fileStatuses[file.name] = 'failed'; });
                     this.showToast('Network error. Could not upload files.', true);
+                } finally {
+                    // Re-render with final statuses
+                    this.renderFiles();
                 }
             }
 
             renderFiles() {
                 const fileList = document.getElementById('file-list');
                 fileList.innerHTML = '';
-                this.uploadedFiles.forEach((file, index) => {
+                this.uploadedFiles.forEach((file) => {
                     const li = document.createElement('li');
                     li.className = 'file-item';
-                    li.innerHTML = `<span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>`;
+                    
+                    const status = this.fileStatuses[file.name] || ''; // 'uploading', 'success', 'failed'
+                    let statusIndicator = '';
+                    if (status) {
+                        const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+                        statusIndicator = `<span class="file-status ${status}">${statusText}</span>`;
+                    }
+
+                    li.innerHTML = `
+                        <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                        ${statusIndicator}
+                    `;
                     fileList.appendChild(li);
                 });
             }
