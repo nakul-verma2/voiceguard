@@ -69,20 +69,84 @@ class WomenSafetyChatbot:
     
     def build_system_prompt(self) -> str:
         """Build the system prompt for the LLM"""
-        return """You are a women's safety legal assistant for India.
+        return """You are a women's safety assistant for India.
 
-CORE RULES:
-1. Answer questions about women's safety, rights, and Indian law
-2. For unrelated questions, politely redirect to your specialty
-3. Use the legal context provided to give accurate answers
-4. Include relevant section numbers when applicable
-5. Be empathetic, supportive, and respectful
-6. Respond in the same language as the user (English/Hindi/Hinglish)
+Your specialty: women's safety, women's rights, and Indian law.
 
-TONE:
-- Warm and conversational for casual chat
-- Detailed and precise for legal questions
-- Empathetic for emergency situations"""
+====================
+LANGUAGE
+====================
+Always respond in the same language as the user (English/Hindi/Hinglish).
+
+====================
+HOW TO RESPOND
+====================
+You have TWO response styles. Choose the correct one by carefully reading the user's actual message:
+
+📋 STYLE 1: LEGAL & DETAILED
+Use this style ONLY if:
+- The user's message contains "LEGAL CONTEXT:" (check their actual text carefully)
+- OR they ask about specific laws, IPC sections, legal procedures, FIR filing, courts, acts, or legal rights
+
+Response format:
+- Give a detailed, step-by-step legal answer
+- Mention relevant Indian laws and sections when you know them
+- Explain practical steps they can take
+- Remind them to consult a real lawyer for specific cases
+- Stay formal, precise, and empathetic
+
+Example questions for STYLE 1:
+- "LEGAL CONTEXT: How do I file FIR for workplace harassment?"
+- "What sections of IPC protect against domestic violence?"
+- "Can I get legal protection from stalking in India?"
+
+---
+
+💬 STYLE 2: SHORT & FRIENDLY
+Use this style for everything else:
+- Greetings like "hello", "hi", "नमस्ते"
+- General safety tips (travel, online safety, boundaries)
+- Emotional support questions
+- Practical advice (not legal procedures)
+
+Response format:
+- Answer in 1-4 sentences maximum
+- Be warm, encouraging, and supportive
+- Give simple, actionable tips
+- Keep it conversational like talking to a friend
+
+Example questions for STYLE 2:
+- "hello" → greet back warmly and ask how you can help
+- "I feel unsafe at night" → give short safety tips
+- "My friend is very controlling" → brief supportive advice
+
+====================
+OUT-OF-SCOPE QUESTIONS
+====================
+If the user asks about topics unrelated to women's safety (coding, cricket, recipes, etc.):
+- Reply in 1 sentence politely
+- Say you focus on women's safety and rights in India
+- Invite them to ask a relevant question
+
+====================
+EMERGENCY SITUATIONS
+====================
+If the user describes immediate danger (violence happening now, threats):
+- Be highly empathetic
+- Urge them to contact police (100/112), trusted people, or helplines immediately
+- Give brief practical steps they can take right now
+
+====================
+IMPORTANT RULES
+====================
+1. Do NOT add words or phrases that the user did not write
+2. Read their actual message carefully before deciding which style to use
+3. For simple greetings, ALWAYS use STYLE 2 (short & friendly)
+4. Never encourage violence, self-harm, or illegal actions
+5. You are an informational assistant, not a replacement for real lawyers or police
+
+Now respond to the user's message in the appropriate style."""
+
     
     def build_user_message(self, query: str, legal_context: str) -> str:
         """Build the user message with legal context"""
@@ -295,3 +359,141 @@ Provide helpful, accurate information based on the context above."""
             "model": self.model,
             "chroma_path": self.chroma_path
         }
+
+    def _should_skip_db_search(self, message: str) -> bool:
+        """
+        Determine if the DB search should be skipped based on heuristics.
+        
+        Args:
+            message: The user's message.
+            
+        Returns:
+            True if the DB search should be skipped, False otherwise.
+        """
+        message = message.lower()
+        
+        # 1. Check message length
+        if len(message.split()) < 4:
+            return True
+            
+        # 2. Check for legal keywords
+        legal_keywords = ["law", "legal", "police", "fir", "abuse", "domestic", "violence", "section", "act", "ipc", "crpc", "court", "advocate", "lawyer", "harassment"]
+        if any(keyword in message for keyword in legal_keywords):
+            return False
+            
+        # 3. Check for question-like structure
+        if message.endswith('?') or message.startswith(('what', 'how', 'why', 'who', 'when', 'where')):
+            return False
+            
+        return True
+
+    def chat(self, user_id: str, message: str, language: str = "english") -> Dict:
+        """
+        Main chat function
+        
+        Args:
+            user_id: Unique user identifier
+            message: User message
+            language: Language preference (english/hindi/hinglish)
+            
+        Returns:
+            Dictionary with response and metadata
+        """
+        try:
+            # Start overall timer
+            overall_start_time = time.time()
+
+            # Validate inputs
+            if not user_id or not message:
+                logger.warning("❌ Missing user_id or message")
+                return {
+                    "error": "user_id and message are required",
+                    "success": False
+                }
+            
+            message = message.strip()
+            
+            if len(message) == 0:
+                return {
+                    "error": "Message cannot be empty",
+                    "success": False
+                }
+            
+            logger.info(f"📨 Processing message from user {user_id}: {message[:50]}...")
+            
+            db_search_time_ms = 0
+            context = ""  # Initialize context as empty string
+            if self._should_skip_db_search(message):
+                logger.info("💬 Simple message detected, skipping DB search.")
+            else:
+                # Start DB search timer
+                db_search_start_time = time.time()
+                legal_docs = self.search_laws(message)
+                db_search_end_time = time.time()
+                db_search_time_ms = round((db_search_end_time - db_search_start_time) * 1000)
+                # Check if the search returned actual documents
+                if legal_docs and "No specific legal context found." not in legal_docs[0] and "Unable to retrieve legal context." not in legal_docs[0]:
+                    context = "\n\n".join(legal_docs)
+            
+            # Build messages array
+            messages = [
+                {"role": "system", "content": self.build_system_prompt()}
+            ]
+            
+            # Add conversation history
+            history = self.get_user_history(user_id)
+            messages.extend(history)
+            
+            # Add current message
+            if context:
+                user_msg = self.build_user_message(message, context)
+            else:
+                user_msg = message
+            messages.append({"role": "user", "content": user_msg})
+            
+            # Start API call timer
+            api_call_start_time = time.time()
+            response = self.call_openrouter(messages)
+            api_call_end_time = time.time()
+            api_call_time_ms = round((api_call_end_time - api_call_start_time) * 1000)
+            
+            if response is None:
+                logger.error("❌ Failed to get response from OpenRouter")
+                return {
+                    "error": "Failed to generate response. Please try again.",
+                    "success": False,
+                    "db_search_time_ms": db_search_time_ms,
+                    "api_call_time_ms": api_call_time_ms,
+                    "overall_processing_time_ms": round((time.time() - overall_start_time) * 1000)
+                }
+            
+            # Add disclaimer
+            response = self.add_disclaimer(response)
+            
+            # Save to history
+            self.save_to_history(user_id, message, response)
+            
+            logger.info(f"✅ Response generated for user {user_id}")
+            
+            overall_end_time = time.time()
+            overall_processing_time_ms = round((overall_end_time - overall_start_time) * 1000)
+
+            return {
+                "success": True,
+                "response": response,
+                "user_id": user_id,
+                "language": language,
+                "timestamp": datetime.now().isoformat(),
+                "db_search_time_ms": db_search_time_ms,
+                "api_call_time_ms": api_call_time_ms,
+                "overall_processing_time_ms": overall_processing_time_ms
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Unexpected error in chat: {str(e)}")
+            return {
+                "error": "An unexpected error occurred. Please try again.",
+                "success": False,
+                "details": str(e),
+                "overall_processing_time_ms": round((time.time() - overall_start_time) * 1000)
+            }
