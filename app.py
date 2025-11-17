@@ -25,6 +25,7 @@ from utils.database import get_user, update_user_contacts, save_evidence_metadat
 from utils.storage import upload_evidence_to_cloudinary
 
 
+
 app = Flask(__name__,
             template_folder='templates',
             static_folder='templates')
