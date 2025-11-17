@@ -9,3 +9,7 @@ python-dotenv
 pymongo[srv]
 cloudinary
 dnspython
+requests
+setuptools
+openai-whisper
+chromadb
