@@ -7,3 +7,6 @@ chroma_db
 query_bot.py
 temp_uploads
 /venv
+
+main1.py
+frontend/src/components/Header.tsx
