@@ -148,6 +148,7 @@ class WomenSafetyChatbot:
             save_chat_message(user_id, "user", message)
             save_chat_message(user_id, "assistant", final_response)
 
+            overall_processing_time_ms = round((time.time() - overall_start_time) * 1000)
             logger.info(f"✅ Response generated and saved for user {user_id}. Times: DB Search: {db_search_time_ms}ms, API Call: {api_call_time_ms}ms, Overall: {overall_processing_time_ms}ms")
             
             return {
@@ -156,7 +157,7 @@ class WomenSafetyChatbot:
                 "timestamp": datetime.now().isoformat(),
                 "db_search_time_ms": db_search_time_ms,
                 "api_call_time_ms": api_call_time_ms,
-                "overall_processing_time_ms": round((time.time() - overall_start_time) * 1000)
+                "overall_processing_time_ms": overall_processing_time_ms
             }
 
         except Exception as e:
