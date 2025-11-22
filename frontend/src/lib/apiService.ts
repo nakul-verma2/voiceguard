@@ -2,18 +2,10 @@
 
 const API_BASE_URL = 'http://localhost:5000'; // MUST match your uvicorn host/port
 
-// --- Helper Functions ---
-const getUserId = () => {
-    // IMPORTANT: Replace this with actual user ID retrieval logic (e.g., from context, cookies, or storage)
-    // For now, using a placeholder.
-    return 'demo_user_123'; 
-};
-
 // --- Monitoring & SMS Endpoints ---
 
-// 1. Start Monitoring (Requires user_id in body)
-export const startMonitoring = async () => {
-    const userId = getUserId();
+// 1. Start Monitoring (Requires user_id)
+export const startMonitoring = async (userId: string) => {
     const response = await fetch(`${API_BASE_URL}/start_monitoring`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,9 +28,8 @@ export const stopMonitoring = async () => {
     return response.json();
 };
 
-// 3. Activate Emergency SOS (Uses /trigger_sos_for_user endpoint)
-export const activateSOS = async () => {
-    const userId = getUserId();
+// 3. Activate Emergency SOS
+export const activateSOS = async (userId: string) => {
     const response = await fetch(`${API_BASE_URL}/trigger_sos_for_user`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,7 +37,6 @@ export const activateSOS = async () => {
     });
     
     if (!response.ok) {
-        // Attempt to read error message from the response body
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to send emergency SOS.');
     }
@@ -55,9 +45,8 @@ export const activateSOS = async () => {
 
 // --- Contact Management ---
 
-// 4. Add Trusted Contact (🌟 NEW)
-export const addTrustedContact = async (contactNumber: string) => {
-    const userId = getUserId();
+// 4. Add Trusted Contact
+export const addTrustedContact = async (userId: string, contactNumber: string) => {
     const response = await fetch(`${API_BASE_URL}/add_contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,8 +67,7 @@ export const addTrustedContact = async (contactNumber: string) => {
 // --- Chatbot Endpoints ---
 
 // 5. Send Chat Message
-export const sendChatMessage = async (message: string) => {
-    const userId = getUserId();
+export const sendChatMessage = async (userId: string, message: string) => {
     const response = await fetch(`${API_BASE_URL}/chatbot/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -97,20 +85,17 @@ export const sendChatMessage = async (message: string) => {
 // --- Evidence Upload Endpoint ---
 
 // 6. Upload Evidence
-export const uploadEvidence = async (fileList: FileList) => {
-    const userId = getUserId();
+export const uploadEvidence = async (userId: string, fileList: FileList) => {
     const formData = new FormData();
     formData.append('user_id', userId);
     
     // Append each file in the list under the key 'files'
-    // 🌟 FIX: Removed '[]' from the key name to match FastAPI's expectation
     for (let i = 0; i < fileList.length; i++) {
         formData.append('files', fileList[i]); 
     }
 
     const response = await fetch(`${API_BASE_URL}/upload_evidence`, {
         method: 'POST',
-        // Note: Do NOT manually set 'Content-Type' for FormData, the browser does it automatically
         body: formData, 
     });
 

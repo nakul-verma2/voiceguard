@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mic, MicOff, UserPlus, Upload, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from "@clerk/clerk-react"; // 👈 Import Clerk hook
 import { 
   startMonitoring, 
   stopMonitoring, 
   activateSOS, 
   uploadEvidence,
-  addTrustedContact // 🌟 NEW IMPORTS
+  addTrustedContact 
 } from '@/lib/apiService';
 
 const Demo = () => {
@@ -18,10 +19,11 @@ const Demo = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [contactNumber, setContactNumber] = useState('');
   const { toast } = useToast();
+  const { user } = useUser(); // 👈 Get current user details
 
   // --- Recording Handler ---
   const handleRecording = async () => {
-    if (isLoading) return;
+    if (isLoading || !user) return; // 👈 Check for user
 
     setIsLoading(true);
     try {
@@ -32,14 +34,14 @@ const Demo = () => {
           description: 'Audio monitoring has been safely shut down.',
         });
       } else {
-        await startMonitoring();
+        await startMonitoring(user.id); // 👈 Pass user.id
         toast({
           title: 'Recording Started',
           description: 'Background audio monitoring is now active.',
         });
       }
       setIsRecording(!isRecording);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Monitoring Error:', error);
       toast({
         title: 'Action Failed',
@@ -53,17 +55,17 @@ const Demo = () => {
 
   // --- Emergency Handler ---
   const handleEmergency = async () => {
-    if (isLoading) return;
+    if (isLoading || !user) return;
 
     setIsLoading(true);
     try {
-      await activateSOS(); 
+      await activateSOS(user.id);  // 👈 Pass user.id
       toast({
         title: 'Emergency SOS Activated',
         description: 'Notifying trusted contacts and emergency services.',
         variant: 'destructive',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('SOS Error:', error);
       toast({
         title: 'SOS Failed',
@@ -78,16 +80,17 @@ const Demo = () => {
   // --- File Upload Handler ---
   const handleUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !user) return;
 
     setIsLoading(true);
     try {
-      const result = await uploadEvidence(files);
+      // 👈 Pass user.id to upload function
+      const result = await uploadEvidence(user.id, files); 
       toast({
         title: 'Upload Successful',
         description: `Successfully uploaded ${result.successful_files.length} file(s) to the Evidence Locker.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload Error:', error);
       toast({
         title: 'Upload Failed',
@@ -100,7 +103,7 @@ const Demo = () => {
     }
   };
 
-  // 🌟 UPDATED: Add Contact Handler
+  // --- Add Contact Handler ---
   const handleAddContact = async () => {
     if (!contactNumber.trim()) {
       toast({
@@ -110,19 +113,20 @@ const Demo = () => {
       });
       return;
     }
+    if (!user) return;
 
-    setIsLoading(true); // Start loading
+    setIsLoading(true); 
 
     try {
-      // Call the API to save to backend
-      await addTrustedContact(contactNumber);
+      // 👈 Pass user.id
+      await addTrustedContact(user.id, contactNumber);
 
       toast({
         title: "Contact Added",
         description: `${contactNumber} has been added to your trusted circle.`,
       });
-      setContactNumber(''); // Clear input only on success
-    } catch (error) {
+      setContactNumber(''); 
+    } catch (error: any) {
         console.error("Add Contact Error:", error);
         toast({
             title: "Error",
@@ -130,7 +134,7 @@ const Demo = () => {
             variant: "destructive"
         });
     } finally {
-        setIsLoading(false); // Stop loading
+        setIsLoading(false); 
     }
   };
 
