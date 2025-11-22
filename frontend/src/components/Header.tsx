@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Globe, Moon, Sun } from 'lucide-react';
+import { SignInButton, UserButton, useUser } from "@clerk/clerk-react"; // 👈 Import Clerk
 
 const Header = () => {
   const { mode, toggleMode, language, setLanguage, t } = useApp();
   const navigate = useNavigate();
+  const { isSignedIn } = useUser(); // 👈 Check login state
 
   const handleQuickExit = () => {
     window.location.replace('https://www.google.com');
@@ -34,14 +36,13 @@ const Header = () => {
       <nav className="container mx-auto px-6 py-4 relative">
         <div className="flex items-center justify-between">
           
-          {/* Logo Section - Enhanced */}
+          {/* Logo Section */}
           <motion.button 
             onClick={() => navigate('/')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="flex items-center gap-3 group relative"
           >
-            {/* Icon/Shield */}
             <div className="relative">
               <div className="absolute inset-0 bg-accent/20 blur-xl rounded-full group-hover:bg-accent/30 transition-all duration-300" />
               <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-lg shadow-accent/30">
@@ -51,7 +52,6 @@ const Header = () => {
               </div>
             </div>
             
-            {/* Brand Name */}
             <div className="flex flex-col items-start">
               <span className="text-2xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
                 VoiceGuard
@@ -60,15 +60,12 @@ const Header = () => {
                 Safety First
               </span>
             </div>
-            
-            {/* Hover effect line */}
-            <div className="absolute -bottom-2 left-0 w-0 h-[2px] bg-gradient-to-r from-accent to-transparent group-hover:w-full transition-all duration-500" />
           </motion.button>
 
-          {/* Controls Section - Modernized */}
+          {/* Controls Section */}
           <div className="flex items-center gap-4">
             
-            {/* Mode Toggle - Icon Based */}
+            {/* 1. Mode Toggle */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 variant="ghost"
@@ -92,33 +89,44 @@ const Header = () => {
               </Button>
             </motion.div>
             
-            {/* Language Selector - Custom Styled */}
-            <div className="relative group">
+            {/* 2. Language Selector */}
+            <div className="relative group hidden md:block">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as any)}
-                className="h-10 pl-10 pr-10 rounded-xl border border-white/10 bg-card/50 backdrop-blur-md text-foreground text-sm font-medium transition-all duration-300 hover:border-accent/40 hover:bg-accent/5 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent shadow-lg hover:shadow-accent/20 cursor-pointer appearance-none"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23888'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                  backgroundPosition: 'right 0.5rem center',
-                  backgroundSize: '1.25rem',
-                  backgroundRepeat: 'no-repeat'
-                }}
+                className="h-10 pl-10 pr-8 rounded-xl border border-white/10 bg-card/50 backdrop-blur-md text-foreground text-sm font-medium transition-all duration-300 hover:border-accent/40 hover:bg-accent/5 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent shadow-lg hover:shadow-accent/20 cursor-pointer appearance-none"
               >
                 {languageOptions.map(opt => (
-                  <option 
-                    key={opt.value} 
-                    value={opt.value}
-                    className="bg-card text-foreground py-2"
-                  >
+                  <option key={opt.value} value={opt.value} className="bg-card text-foreground">
                     {opt.flag} {opt.label}
                   </option>
                 ))}
               </select>
             </div>
+
+            {/* 3. CLERK AUTH BUTTONS (New) */}
+            <div className="flex items-center">
+                {!isSignedIn && (
+                    <SignInButton mode="modal">
+                        <Button variant="outline" className="rounded-xl border-white/10 hover:bg-accent/10">
+                            Sign In
+                        </Button>
+                    </SignInButton>
+                )}
+                {isSignedIn && (
+                    <UserButton 
+                        afterSignOutUrl="/"
+                        appearance={{
+                            elements: {
+                                avatarBox: "w-10 h-10 border-2 border-accent shadow-glow"
+                            }
+                        }}
+                    />
+                )}
+            </div>
             
-            {/* Quick Exit Button - Prominent */}
+            {/* 4. Quick Exit Button */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 size="sm"
@@ -129,11 +137,11 @@ const Header = () => {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  {t('quick_exit')}
+                  <span className="hidden sm:inline">{t('quick_exit')}</span>
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
               </Button>
             </motion.div>
+
           </div>
         </div>
       </nav>
