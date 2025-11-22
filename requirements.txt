@@ -13,3 +13,7 @@ requests
 setuptools
 openai-whisper
 chromadb
+fastapi
+uvicorn
+pydentic
+python-multipart

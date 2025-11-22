@@ -148,7 +148,7 @@ class WomenSafetyChatbot:
             save_chat_message(user_id, "user", message)
             save_chat_message(user_id, "assistant", final_response)
 
-            logger.info(f"✅ Response generated and saved for user {user_id}")
+            logger.info(f"✅ Response generated and saved for user {user_id}. Times: DB Search: {db_search_time_ms}ms, API Call: {api_call_time_ms}ms, Overall: {overall_processing_time_ms}ms")
             
             return {
                 "success": True,

@@ -3,7 +3,7 @@ incidents
 evidence
 .env
 .venv
-chroma_db
+/chroma_db
 query_bot.py
 temp_uploads
 /venv
