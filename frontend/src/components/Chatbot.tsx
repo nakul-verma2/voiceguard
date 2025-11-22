@@ -1,15 +1,19 @@
+// C:\Users\piyus\OneDrive\Desktop\voiceguard\frontend\src\components\Chatbot.tsx
+
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { sendChatMessage } from '@/lib/apiService'; // Ensure this is imported
 
 const Chatbot = () => {
   const { t } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ text: string; isBot: boolean }[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false); // State for loading/typing
   const scrollEndRef = useRef<HTMLDivElement>(null);
 
   // Load initial greeting
@@ -20,24 +24,35 @@ const Chatbot = () => {
   // Auto scroll to bottom
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isTyping]); // Added isTyping to trigger scroll
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() || isTyping) return;
 
-    const newMessages = [...messages, { text: inputValue, isBot: false }];
+    const userMessage = inputValue;
+    const newMessages = [...messages, { text: userMessage, isBot: false }];
     setMessages(newMessages);
     setInputValue('');
+    setIsTyping(true); // Start loading
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const botResponse = await sendChatMessage(userMessage);
+      
       setMessages((prev) => [
         ...prev,
-        { text: t('chatbot_disclaimer') || "This is a demo. Call 112 for emergencies.", isBot: true },
+        { text: botResponse, isBot: true },
       ]);
-    }, 1000);
+    } catch (error) {
+      console.error('Chatbot Error:', error);
+      setMessages((prev) => [
+        ...prev,
+        { text: "Sorry, I couldn't connect to the safety AI. Please try again.", isBot: true },
+      ]);
+    } finally {
+      setIsTyping(false); // Stop loading
+    }
   };
-
+  
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
@@ -77,6 +92,14 @@ const Chatbot = () => {
                   </div>
                 </div>
               ))}
+              {/* Typing indicator */}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] p-3 rounded-lg text-sm bg-secondary text-secondary-foreground rounded-tl-none">
+                    {t('chatbot_typing') || 'AI is thinking...'}
+                  </div>
+                </div>
+              )}
               <div ref={scrollEndRef} />
             </div>
           </ScrollArea>
@@ -89,8 +112,14 @@ const Chatbot = () => {
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder={t('chatbot_placeholder')}
               className="flex-1"
+              disabled={isTyping}
             />
-            <Button size="icon" onClick={handleSend} className="bg-accent hover:bg-accent/90">
+            <Button 
+              size="icon" 
+              onClick={handleSend} 
+              className="bg-accent hover:bg-accent/90"
+              disabled={isTyping || !inputValue.trim()}
+            >
               <Send className="w-4 h-4" />
             </Button>
           </div>
