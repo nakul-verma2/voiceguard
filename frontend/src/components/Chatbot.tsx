@@ -1,19 +1,17 @@
-// C:\Users\piyus\OneDrive\Desktop\voiceguard\frontend\src\components\Chatbot.tsx
-
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { sendChatMessage } from '@/lib/apiService'; // Ensure this is imported
+import { sendChatMessage } from '@/lib/apiService';
 
 const Chatbot = () => {
   const { t } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ text: string; isBot: boolean }[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false); // State for loading/typing
+  const [isTyping, setIsTyping] = useState(false);
   const scrollEndRef = useRef<HTMLDivElement>(null);
 
   // Load initial greeting
@@ -24,7 +22,7 @@ const Chatbot = () => {
   // Auto scroll to bottom
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isOpen, isTyping]); // Added isTyping to trigger scroll
+  }, [messages, isOpen, isTyping]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isTyping) return;
@@ -33,7 +31,7 @@ const Chatbot = () => {
     const newMessages = [...messages, { text: userMessage, isBot: false }];
     setMessages(newMessages);
     setInputValue('');
-    setIsTyping(true); // Start loading
+    setIsTyping(true); 
 
     try {
       const botResponse = await sendChatMessage(userMessage);
@@ -49,7 +47,7 @@ const Chatbot = () => {
         { text: "Sorry, I couldn't connect to the safety AI. Please try again.", isBot: true },
       ]);
     } finally {
-      setIsTyping(false); // Stop loading
+      setIsTyping(false);
     }
   };
   
@@ -79,7 +77,7 @@ const Chatbot = () => {
               {messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}
+                  className={flex ${msg.isBot ? 'justify-start' : 'justify-end'}}
                 >
                   <div
                     className={`max-w-[80%] p-3 rounded-lg text-sm ${
@@ -92,14 +90,18 @@ const Chatbot = () => {
                   </div>
                 </div>
               ))}
-              {/* Typing indicator */}
+              
+              {/* 🌟 UPDATED: Animated Typing Indicator */}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="max-w-[80%] p-3 rounded-lg text-sm bg-secondary text-secondary-foreground rounded-tl-none">
-                    {t('chatbot_typing') || 'AI is thinking...'}
+                  <div className="p-4 rounded-lg bg-secondary text-secondary-foreground rounded-tl-none flex items-center space-x-1 h-10">
+                    <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce"></div>
                   </div>
                 </div>
               )}
+              
               <div ref={scrollEndRef} />
             </div>
           </ScrollArea>
@@ -126,6 +128,7 @@ const Chatbot = () => {
         </div>
       )}
 
+      {/* Toggle Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={`h-14 w-14 rounded-full shadow-glow transition-transform duration-300 ${
@@ -136,7 +139,7 @@ const Chatbot = () => {
         <MessageCircle className="w-7 h-7" />
       </Button>
       
-      {/* Overlay button to close when open (replaces the main button visually) */}
+      {/* Close Button (Overlay) */}
       {isOpen && (
         <Button
           onClick={() => setIsOpen(false)}
