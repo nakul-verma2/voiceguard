@@ -1,8 +1,12 @@
 import os
 import logging
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, OperationFailure
 from datetime import datetime
+
+# --- Load environment variables BEFORE anything else ---
+load_dotenv()
 
 # --- Setup Logging ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
-// 🌟 FIX: Re-adding the missing Card components
+import { Input } from '@/components/ui/input'; 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mic, MicOff, UserPlus, Upload, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -9,28 +9,29 @@ import {
   startMonitoring, 
   stopMonitoring, 
   activateSOS, 
-  uploadEvidence 
-} from '@/lib/apiService'; // Ensure this is imported
+  uploadEvidence,
+  addTrustedContact // 🌟 NEW IMPORTS
+} from '@/lib/apiService';
 
 const Demo = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // 🌟 NEW: Loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [contactNumber, setContactNumber] = useState('');
   const { toast } = useToast();
 
-  const handleRecording = async () => { // 🌟 Updated to async
+  // --- Recording Handler ---
+  const handleRecording = async () => {
     if (isLoading) return;
 
     setIsLoading(true);
     try {
       if (isRecording) {
-        // --- STOP MONITORING API CALL ---
         await stopMonitoring(); 
         toast({
           title: 'Recording Stopped',
           description: 'Audio monitoring has been safely shut down.',
         });
       } else {
-        // --- START MONITORING API CALL ---
         await startMonitoring();
         toast({
           title: 'Recording Started',
@@ -50,12 +51,12 @@ const Demo = () => {
     }
   };
 
-  const handleEmergency = async () => { // 🌟 Updated to async
+  // --- Emergency Handler ---
+  const handleEmergency = async () => {
     if (isLoading) return;
 
     setIsLoading(true);
     try {
-      // --- SOS API CALL ---
       await activateSOS(); 
       toast({
         title: 'Emergency SOS Activated',
@@ -74,7 +75,7 @@ const Demo = () => {
     }
   };
   
-  // 🌟 NEW: Function to handle file input change
+  // --- File Upload Handler ---
   const handleUploadChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -95,8 +96,41 @@ const Demo = () => {
       });
     } finally {
       setIsLoading(false);
-      // Reset the file input field
       event.target.value = '';
+    }
+  };
+
+  // 🌟 UPDATED: Add Contact Handler
+  const handleAddContact = async () => {
+    if (!contactNumber.trim()) {
+      toast({
+        title: "Input Error",
+        description: "Please enter a valid phone number.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true); // Start loading
+
+    try {
+      // Call the API to save to backend
+      await addTrustedContact(contactNumber);
+
+      toast({
+        title: "Contact Added",
+        description: `${contactNumber} has been added to your trusted circle.`,
+      });
+      setContactNumber(''); // Clear input only on success
+    } catch (error) {
+        console.error("Add Contact Error:", error);
+        toast({
+            title: "Error",
+            description: "Failed to save contact. Please try again.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsLoading(false); // Stop loading
     }
   };
 
@@ -106,18 +140,20 @@ const Demo = () => {
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* ... headings ... */}
-
+          
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* Voice Recorder */}
             <Card className="border-border hover:border-accent transition-all">
-              {/* ... CardHeader ... */}
+              <CardHeader>
+                <CardTitle>Audio Monitor</CardTitle>
+                <CardDescription>Record background audio securely.</CardDescription>
+              </CardHeader>
               <CardContent className="space-y-4">
                 <Button
                   onClick={handleRecording}
                   className={`w-full ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`}
-                  disabled={isLoading} // 🌟 Disabled while loading
+                  disabled={isLoading}
                 >
                   {isLoading ? 'Processing...' : isRecording ? (
                     <>
@@ -131,34 +167,53 @@ const Demo = () => {
                     </>
                   )}
                 </Button>
-                {/* ... recording status indicator ... */}
               </CardContent>
             </Card>
 
-            {/* Trusted Contacts - Will require a modal/sidebar component for input/update */}
+            {/* Trusted Contacts */}
             <Card className="border-border hover:border-accent transition-all">
-              {/* ... CardHeader ... */}
+              <CardHeader>
+                <CardTitle>Trusted Contacts</CardTitle>
+                <CardDescription>Add numbers for emergency alerts.</CardDescription>
+              </CardHeader>
               <CardContent>
-                {/* 🌟 Placeholder for setting contacts. Should eventually open a form. */}
-                <Button variant="outline" className="w-full">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Add Contact
-                </Button>
+                <div className="flex w-full max-w-sm items-center space-x-2">
+                  <Input 
+                    type="tel" 
+                    placeholder="+1 (555) 000-0000" 
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                    disabled={isLoading}
+                  />
+                  <Button 
+                    type="submit" 
+                    onClick={handleAddContact}
+                    disabled={isLoading}
+                    variant="secondary"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Alerts will be sent via SMS & WhatsApp.
+                </p>
               </CardContent>
             </Card>
 
-            {/* Evidence Locker - Changed to use a hidden file input */}
+            {/* Evidence Locker */}
             <Card className="border-border hover:border-accent transition-all">
-              {/* ... CardHeader ... */}
+              <CardHeader>
+                <CardTitle>Evidence Locker</CardTitle>
+                <CardDescription>Securely store photos or documents.</CardDescription>
+              </CardHeader>
               <CardContent>
-                {/* 🌟 NEW: Hidden file input linked to the button */}
                 <input
                   id="evidence-upload"
                   type="file"
                   multiple
                   className="hidden"
                   onChange={handleUploadChange}
-                  disabled={isLoading} // 🌟 Disabled while loading
+                  disabled={isLoading}
                 />
                 <Button 
                   variant="outline" 
@@ -174,19 +229,20 @@ const Demo = () => {
 
             {/* Emergency SOS */}
             <Card className="border-border hover:border-accent transition-all md:col-span-2 lg:col-span-3">
-              {/* ... CardHeader ... */}
+              <CardHeader>
+                <CardTitle className="text-destructive">Emergency Zone</CardTitle>
+                <CardDescription>Immediate action required.</CardDescription>
+              </CardHeader>
               <CardContent>
                 <Button
                   onClick={handleEmergency}
                   variant="destructive"
-                  className="w-full shadow-glow"
-                  size="lg"
-                  disabled={isLoading} // 🌟 Disabled while loading
+                  className="w-full shadow-glow h-16 text-lg"
+                  disabled={isLoading}
                 >
-                  <Phone className="mr-2 h-5 w-5" />
-                  {isLoading ? 'Sending SOS...' : 'Activate Emergency SOS'}
+                  <Phone className="mr-2 h-6 w-6" />
+                  {isLoading ? 'Sending SOS...' : 'ACTIVATE EMERGENCY SOS'}
                 </Button>
-                {/* ... text ... */}
               </CardContent>
             </Card>
           </div>

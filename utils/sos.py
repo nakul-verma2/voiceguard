@@ -5,7 +5,7 @@ import requests
 
 # It's good practice to get keys from environment variables, but for this example, we keep it here.
 API_URL = "https://api.smsmobileapi.com/sendsms/"
-API_KEY = "9128ffa5c5e683d5b606630ff6f59d72541984b3a009865d"
+API_KEY = "4129d81e09f0b1aa9679f76627ef9d1f22f7b042f7e0c2de"
 
 # Setup logger once
 logging.basicConfig(

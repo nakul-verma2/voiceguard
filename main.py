@@ -30,6 +30,8 @@ from utils.storage import upload_evidence_to_cloudinary
 load_dotenv()
 
 app = FastAPI(title="VoiceGuard Safety API", version="1.0.0")
+print("Env check:", os.getenv("MONGO_URI"))
+
 
 # CORS — FRONTEND USES localhost:3000
 app.add_middleware(
@@ -60,6 +62,10 @@ class SetContactsRequest(BaseModel):
     user_id: str
     contacts: List[str]
 
+# 🌟 NEW: Model for adding a single contact
+class AddContactRequest(BaseModel):
+    user_id: str
+    contact: str
 
 class MonitoringRequest(BaseModel):
     user_id: str
@@ -113,6 +119,47 @@ def handle_options(request: Request):
 @app.get("/")
 async def root():
     return {"message": "VoiceGuard API is running"}
+
+
+# -----------------------------
+# ADD CONTACT (🌟 NEW ROUTE)
+# -----------------------------
+@app.api_route("/add_contact", methods=["POST", "OPTIONS"])
+async def add_contact_route(request: Request, data: Optional[AddContactRequest] = None):
+    response = handle_options(request)
+    if response:
+        return response
+
+    if not data or not data.user_id or not data.contact:
+        raise HTTPException(400, "user_id and contact are required")
+
+    try:
+        # 1. Get current user data to find existing contacts
+        user_data = get_user(data.user_id)
+        current_contacts = user_data.get("emergency_contacts", []) if user_data else []
+
+        # 2. Append new contact if it doesn't exist
+        if data.contact not in current_contacts:
+            current_contacts.append(data.contact)
+            
+            # 3. Save back to database
+            result = update_user_contacts(data.user_id, current_contacts)
+            if not result:
+                raise HTTPException(500, "Failed to update database.")
+            
+            message = "Contact added successfully."
+        else:
+            message = "Contact already exists."
+
+        return {
+            "status": "success",
+            "message": message,
+            "contacts": current_contacts
+        }
+    
+    except Exception as e:
+        logging.error(f"Error adding contact: {e}")
+        raise HTTPException(500, f"Internal Server Error: {e}")
 
 
 # -----------------------------
@@ -177,7 +224,8 @@ async def trigger_sos_for_user_route(request: Request, data: Optional[TriggerSOS
     contacts = user_data.get("emergency_contacts", []) if user_data else []
 
     if not contacts:
-        raise HTTPException(400, "No emergency contacts found.")
+        logging.warning(f"SOS triggered for user {data.user_id} but NO CONTACTS found.")
+        raise HTTPException(400, "No emergency contacts found. Please add a contact first.")
 
     success_count = 0
     for number in contacts:
@@ -185,7 +233,7 @@ async def trigger_sos_for_user_route(request: Request, data: Optional[TriggerSOS
             success_count += 1
 
     if success_count == 0:
-        raise HTTPException(500, "Failed to send SOS")
+        raise HTTPException(500, "Failed to send SOS to any contacts.")
 
     return {
         "status": "success",

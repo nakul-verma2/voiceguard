@@ -26,7 +26,6 @@ export const startMonitoring = async () => {
 };
 
 // 2. Stop Monitoring 
-// 🌟 FIX: Removed headers and body as the FastAPI endpoint doesn't require a body.
 export const stopMonitoring = async () => {
     const response = await fetch(`${API_BASE_URL}/stop_monitoring`, {
         method: 'POST',
@@ -54,10 +53,31 @@ export const activateSOS = async () => {
     return response.json();
 };
 
+// --- Contact Management ---
+
+// 4. Add Trusted Contact (🌟 NEW)
+export const addTrustedContact = async (contactNumber: string) => {
+    const userId = getUserId();
+    const response = await fetch(`${API_BASE_URL}/add_contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            user_id: userId, 
+            contact: contactNumber 
+        }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to add contact.');
+    }
+    return response.json();
+};
+
 
 // --- Chatbot Endpoints ---
 
-// 4. Send Chat Message
+// 5. Send Chat Message
 export const sendChatMessage = async (message: string) => {
     const userId = getUserId();
     const response = await fetch(`${API_BASE_URL}/chatbot/chat`, {
@@ -71,25 +91,26 @@ export const sendChatMessage = async (message: string) => {
         throw new Error(errorData.detail || 'Chatbot communication failed.');
     }
     const data = await response.json();
-    return data.response; // Assuming the FastAPI response has a key called 'response'
+    return data.response; 
 };
 
 // --- Evidence Upload Endpoint ---
 
-// 5. Upload Evidence
+// 6. Upload Evidence
 export const uploadEvidence = async (fileList: FileList) => {
     const userId = getUserId();
     const formData = new FormData();
     formData.append('user_id', userId);
     
-    // Append each file in the list under the key 'files[]'
+    // Append each file in the list under the key 'files'
+    // 🌟 FIX: Removed '[]' from the key name to match FastAPI's expectation
     for (let i = 0; i < fileList.length; i++) {
-        formData.append('files[]', fileList[i]);
+        formData.append('files', fileList[i]); 
     }
 
     const response = await fetch(`${API_BASE_URL}/upload_evidence`, {
         method: 'POST',
-        // Note: Do NOT manually set 'Content-Type' for FormData
+        // Note: Do NOT manually set 'Content-Type' for FormData, the browser does it automatically
         body: formData, 
     });
 
@@ -99,5 +120,3 @@ export const uploadEvidence = async (fileList: FileList) => {
     }
     return response.json();
 };
-
-// Implement setContacts, clearChatHistory, etc. as needed...
