@@ -35,7 +35,6 @@ const Chatbot = () => {
 
     try {
       const botResponse = await sendChatMessage(userMessage);
-
       setMessages((prev) => [
         ...prev,
         { text: botResponse, isBot: true },
@@ -52,7 +51,7 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
       {isOpen && (
         <div className="mb-4 w-[350px] max-w-[90vw] h-[450px] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in">
 
@@ -68,26 +67,36 @@ const Chatbot = () => {
               className="text-white hover:bg-white/20 h-8 w-8"
               onClick={() => setIsOpen(false)}
             >
-              <X className="w-4 h-4" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4 bg-background/50">
-            <div className="space-y-4">
-              {messages.map((msg, i) => (
+          <ScrollArea className="flex-1 p-4">
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`mb-3 flex ${
+                  msg.isBot ? 'justify-start' : 'justify-end'
+                }`}
+              >
                 <div
                   key={i}
                   className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}
                 >
-                  <div
-                    className={`max-w-[80%] p-3 rounded-lg text-sm ${
-                      msg.isBot
-                        ? 'bg-secondary text-secondary-foreground rounded-tl-none'
-                        : 'bg-accent text-accent-foreground rounded-tr-none'
-                    }`}
-                  >
-                    {msg.text}
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+
+            {/* Animated Typing Indicator */}
+            {isTyping && (
+              <div className="mb-3 flex justify-start">
+                <div className="rounded-2xl px-4 py-2 bg-muted">
+                  <div className="flex gap-1">
+                    <span className="animate-bounce">•</span>
+                    <span className="animate-bounce delay-100">•</span>
+                    <span className="animate-bounce delay-200">•</span>
                   </div>
                 </div>
               ))}
@@ -108,7 +117,7 @@ const Chatbot = () => {
           </ScrollArea>
 
           {/* Input */}
-          <div className="p-3 border-t border-border bg-card flex gap-2">
+          <div className="p-4 border-t flex gap-2">
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -122,8 +131,9 @@ const Chatbot = () => {
               onClick={handleSend}
               className="bg-accent hover:bg-accent/90"
               disabled={isTyping || !inputValue.trim()}
+              size="icon"
             >
-              <Send className="w-4 h-4" />
+              <Send className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -137,7 +147,7 @@ const Chatbot = () => {
         }`}
         size="icon"
       >
-        <MessageCircle className="w-7 h-7" />
+        <MessageCircle className="h-6 w-6" />
       </Button>
 
       {/* Close Overlay Button */}
@@ -147,7 +157,7 @@ const Chatbot = () => {
           className="h-14 w-14 rounded-full shadow-lg absolute bottom-0 right-0 bg-destructive hover:bg-destructive/90"
           size="icon"
         >
-          <X className="w-7 h-7" />
+          <X className="h-6 w-6" />
         </Button>
       )}
     </div>

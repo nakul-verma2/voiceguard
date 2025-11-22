@@ -99,6 +99,30 @@ class IncidentRecorder:
         except Exception as e:
             logging.error(f"❌ Error saving incident: {e}")
             return None
+
+    def save_audio_evidence(self, audio_data, sample_rate=16000):
+        """Saves only the audio evidence for an incident and returns the filename."""
+        self.incident_count += 1
+        timestamp = datetime.now()
+        
+        # Generate a unique filename
+        incident_id = f"incident_{timestamp.strftime('%Y%m%d_%H%M%S')}_{self.incident_count:03d}"
+        audio_filename = f"{incident_id}.wav"
+        audio_filepath = os.path.join(self.audio_dir, audio_filename)
+        
+        try:
+            # Normalize and write the audio file
+            if audio_data.dtype == np.int16:
+                audio_float = audio_data.astype(np.float32) / 32768.0
+            else:
+                audio_float = audio_data.astype(np.float32)
+                
+            sf.write(audio_filepath, audio_float, sample_rate)
+            logging.info(f"💾 Audio evidence saved directly: {audio_filepath}")
+            return audio_filename
+        except Exception as e:
+            logging.error(f"❌ Error saving direct audio evidence: {e}")
+            return None
     
     def get_incident_summary(self):
         """Get summary of all incidents"""

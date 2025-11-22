@@ -26,6 +26,14 @@ class AudioBuffer:
         # Get last N samples
         recent_samples = list(self.buffer)[-num_samples:]
         return np.array(recent_samples, dtype=np.int16)
+
+    def get_all_audio(self):
+        """Get all audio from the buffer as a numpy array"""
+        return np.array(list(self.buffer), dtype=np.int16)
+
+    def is_empty(self):
+        """Check if the buffer is empty"""
+        return len(self.buffer) == 0
     
     def clear(self):
         """Clear the buffer"""
