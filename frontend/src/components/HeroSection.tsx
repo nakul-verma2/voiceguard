@@ -10,7 +10,7 @@ const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden select-none">
 
-      {/* Cinematic Multi‑Layer Background */}
+      {/* Cinematic Multi-Layer Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background/90 to-accent/10" />
 
       {/* Moving Light Sweep */}
@@ -47,17 +47,7 @@ const HeroSection = () => {
           className="max-w-5xl mx-auto text-center space-y-10"
         >
 
-          {/* Minimal serious accent marker */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="flex items-center justify-center gap-3 mb-1"
-          >
-            <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent/60 to-accent" />
-            <div className="h-2 w-2 rounded-full bg-accent shadow-[0_0_12px_var(--tw-shadow-color)] shadow-accent" />
-            <div className="h-px w-16 bg-gradient-to-l from-transparent via-accent/60 to-accent" />
-          </motion.div>
+          {/* 🚫 Accent marker removed completely */}
 
           {/* Headline */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.1]">
@@ -111,6 +101,7 @@ const HeroSection = () => {
               {t('your_privacy_protected')}
             </p>
           </motion.div>
+
         </motion.div>
       </div>
 

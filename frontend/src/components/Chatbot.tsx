@@ -31,11 +31,11 @@ const Chatbot = () => {
     const newMessages = [...messages, { text: userMessage, isBot: false }];
     setMessages(newMessages);
     setInputValue('');
-    setIsTyping(true); 
+    setIsTyping(true);
 
     try {
       const botResponse = await sendChatMessage(userMessage);
-      
+
       setMessages((prev) => [
         ...prev,
         { text: botResponse, isBot: true },
@@ -50,11 +50,12 @@ const Chatbot = () => {
       setIsTyping(false);
     }
   };
-  
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
         <div className="mb-4 w-[350px] max-w-[90vw] h-[450px] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in">
+
           {/* Header */}
           <div className="bg-accent p-4 flex justify-between items-center">
             <h3 className="font-bold text-white flex items-center gap-2">
@@ -62,9 +63,9 @@ const Chatbot = () => {
               {t('chatbot_title')}
             </h3>
             <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-white hover:bg-white/20 h-8 w-8" 
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20 h-8 w-8"
               onClick={() => setIsOpen(false)}
             >
               <X className="w-4 h-4" />
@@ -77,7 +78,7 @@ const Chatbot = () => {
               {messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={flex ${msg.isBot ? 'justify-start' : 'justify-end'}}
+                  className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}
                 >
                   <div
                     className={`max-w-[80%] p-3 rounded-lg text-sm ${
@@ -90,8 +91,8 @@ const Chatbot = () => {
                   </div>
                 </div>
               ))}
-              
-              {/* 🌟 UPDATED: Animated Typing Indicator */}
+
+              {/* Typing Indicator */}
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="p-4 rounded-lg bg-secondary text-secondary-foreground rounded-tl-none flex items-center space-x-1 h-10">
@@ -101,7 +102,7 @@ const Chatbot = () => {
                   </div>
                 </div>
               )}
-              
+
               <div ref={scrollEndRef} />
             </div>
           </ScrollArea>
@@ -116,9 +117,9 @@ const Chatbot = () => {
               className="flex-1"
               disabled={isTyping}
             />
-            <Button 
-              size="icon" 
-              onClick={handleSend} 
+            <Button
+              size="icon"
+              onClick={handleSend}
               className="bg-accent hover:bg-accent/90"
               disabled={isTyping || !inputValue.trim()}
             >
@@ -128,7 +129,7 @@ const Chatbot = () => {
         </div>
       )}
 
-      {/* Toggle Button */}
+      {/* Floating Toggle Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={`h-14 w-14 rounded-full shadow-glow transition-transform duration-300 ${
@@ -138,8 +139,8 @@ const Chatbot = () => {
       >
         <MessageCircle className="w-7 h-7" />
       </Button>
-      
-      {/* Close Button (Overlay) */}
+
+      {/* Close Overlay Button */}
       {isOpen && (
         <Button
           onClick={() => setIsOpen(false)}
