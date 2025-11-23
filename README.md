@@ -39,7 +39,7 @@
 </p>
 
 <p align="center">
-  <a href="https://youtu.be/dGfcnviHOPQ" title="Watch the Demo Video">
+  <a href="[https://youtu.be/dGfcnviHOPQ](https://youtu.be/fml2F7navW4)" title="Watch the Demo Video">
     <img src="https://github.com/nakul-verma2/voiceguard/blob/edc3e3a3e87be0db4f1669598d7a43611ac05bd9/screenshots/Thumbnail.png" alt="VoiceGuard Demo" width="70%">
   </a>
 </p>
