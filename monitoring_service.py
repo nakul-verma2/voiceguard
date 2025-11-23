@@ -14,13 +14,12 @@ from utils.cloud_storage import CloudUploader
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(module)s | %(message)s')
 
 # --- Worker Function for Cloud Upload & DB Logging ---
-def run_upload_worker(audio_path, incident_id):
+def run_upload_worker(audio_path, incident_id, user_id):
     """
     Worker function to upload evidence and log to DB in a separate process.
     """
     logging.info(f"UPLOADER (PID: {os.getpid()}): Starting cloud upload for {incident_id}")
     try:
-        user_id = "user@123" # Placeholder User ID
         
         # 1. Upload to Cloudinary
         uploader = CloudUploader()
@@ -42,7 +41,7 @@ def run_upload_worker(audio_path, incident_id):
     except Exception as e:
         logging.error(f"UPLOADER (PID: {os.getpid()}): An exception occurred: {e}")
 
-def run_monitoring_loop(stop_event):
+def run_monitoring_loop(stop_event, user_id):
     """
     The main monitoring loop, adapted from main2.py.
     This function is intended to be run in a separate process.
@@ -117,7 +116,7 @@ def run_monitoring_loop(stop_event):
                         logging.info(f"   • Evidence saved locally: evidence/{incident_filename}")
                         audio_filepath = os.path.join("evidence", incident_filename)
                         incident_id = os.path.splitext(incident_filename)[0]
-                        process = multiprocessing.Process(target=run_upload_worker, args=(audio_filepath, incident_id)) 
+                        process = multiprocessing.Process(target=run_upload_worker, args=(audio_filepath, incident_id, user_id)) 
                         process.start()
                     else:
                         logging.error("• Failed to save audio evidence.")
@@ -152,6 +151,6 @@ def run_monitoring_loop(stop_event):
                     # Note: Using a process here might not complete if the main app is force-killed.
                     # For a clean shutdown, this might need to be a blocking call.
                     # For now, we'll still spawn it.
-                    process = multiprocessing.Process(target=run_upload_worker, args=(audio_filepath, incident_id)) 
+                    process = multiprocessing.Process(target=run_upload_worker, args=(audio_filepath, incident_id, user_id)) 
                     process.start()
         logging.info("   • Audio capture stopped.")

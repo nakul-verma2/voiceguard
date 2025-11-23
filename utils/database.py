@@ -33,20 +33,51 @@ def _get_db():
         return None
 
 # --- User Functions ---
-def get_user(user_id):
-    """Retrieves a user document from the database."""
+
+
+
+
+def get_or_create_user(user_id: str):
+    """
+    Retrieves a user document or creates a new one if it doesn't exist.
+    This is the primary way to ensure a user is in the system.
+    """
     db = _get_db()
     if db is None:
-        logging.warning("Skipping get_user: database not connected.")
+        logging.warning("Skipping get_or_create_user: database not connected.")
         return None
     try:
+        # Use upsert to create the user if they don't exist.
+        # $setOnInsert ensures that we only set these values on creation.
+        result = db.users.update_one(
+            {"user_id": user_id},
+            {
+                "$setOnInsert": {
+                    "emergency_contacts": [],
+                    "created_at": datetime.utcnow()
+                },
+                "$set": {"updated_at": datetime.utcnow()}
+            },
+            upsert=True
+        )
+        
+        if result.upserted_id:
+            logging.info(f"New user created with user_id: {user_id}")
+        
+        # Return the (potentially newly created) user document
         return db.users.find_one({"user_id": user_id})
+
     except OperationFailure as e:
-        logging.error(f"Error getting user {user_id}: {e}")
+        logging.error(f"Database error for user {user_id}: {e}")
         return None
 
+
+
+
+
+
 def update_user_contacts(user_id, contacts):
-    """Updates or creates a user with their emergency contacts."""
+    """Updates a user's emergency contacts."""
     db = _get_db()
     if db is None:
         logging.warning("Skipping update_user_contacts: database not connected.")
@@ -55,13 +86,14 @@ def update_user_contacts(user_id, contacts):
         result = db.users.update_one(
             {"user_id": user_id},
             {"$set": {"emergency_contacts": contacts, "updated_at": datetime.utcnow()}},
-            upsert=True
         )
         logging.info(f"Updated contacts for user {user_id}.")
         return result
     except OperationFailure as e:
         logging.error(f"Error updating contacts for user {user_id}: {e}")
         return None
+
+
 
 # --- Chat History Functions ---
 def save_chat_message(user_id, role, content):

@@ -68,7 +68,7 @@ export const addTrustedContact = async (userId: string, contactNumber: string) =
 
 // 5. Send Chat Message
 export const sendChatMessage = async (userId: string, message: string) => {
-    const response = await fetch(`${API_BASE_URL}/chatbot/chat`, {
+    const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, message }),
