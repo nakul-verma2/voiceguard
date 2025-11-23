@@ -30,24 +30,24 @@ const StatsSection = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="py-20 bg-card/50">
+    <section ref={sectionRef} className="py-12 md:py-20 bg-card/50">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
+        <h2 className="text-3xl md:text-4xl md:text-5xl font-bold text-center mb-10 md:mb-16">
           {t('stats_title')}
         </h2>
         
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="bg-card border border-border rounded-xl p-8 text-center hover:border-accent transition-all hover:shadow-glow"
+              className="bg-card border border-border rounded-xl p-6 md:p-8 text-center hover:border-accent transition-all hover:shadow-glow"
             >
-              <div className="text-6xl font-bold text-accent mb-4">
+              <div className="text-5xl md:text-6xl font-bold text-accent mb-4">
                 {isVisible ? <CountUp end={stat.value} /> : '0'}
                 {index < 2 && '%'}
               </div>
-              <p className="text-lg mb-2">{stat.label}</p>
-              <p className="text-sm text-muted-foreground">{stat.source}</p>
+              <p className="text-base md:text-lg mb-2">{stat.label}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{stat.source}</p>
             </div>
           ))}
         </div>

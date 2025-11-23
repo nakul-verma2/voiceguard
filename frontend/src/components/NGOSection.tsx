@@ -16,33 +16,33 @@ const NGOSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-background text-foreground" id="ngos">
+    <section className="py-12 md:py-20 bg-background text-foreground" id="ngos">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">{t('ngos_title')}</h2>
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('ngos_title')}</h2>
           <div className="w-16 h-1 bg-destructive mx-auto rounded-full"></div>
         </div>
 
-        {/* Emergency Numbers - Matches image_63f665.png */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
+        {/* Emergency Numbers */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
           <a href="tel:181" className="group block">
-            <div className="bg-card border border-accent/30 hover:border-accent hover:-translate-y-1 transition-all duration-300 rounded-xl p-8 text-center">
-              <span className="block text-5xl font-black text-destructive mb-2 group-hover:scale-110 transition-transform">181</span>
-              <span className="text-xl font-semibold text-white">{t('womens_helpline')}</span>
+            <div className="bg-card border border-accent/30 hover:border-accent hover:-translate-y-1 transition-all duration-300 rounded-xl p-6 md:p-8 text-center">
+              <span className="block text-4xl md:text-5xl font-black text-destructive mb-2 group-hover:scale-110 transition-transform">181</span>
+              <span className="text-lg md:text-xl font-semibold text-white">{t('womens_helpline')}</span>
             </div>
           </a>
           <a href="tel:112" className="group block">
-            <div className="bg-destructive border border-destructive hover:-translate-y-1 transition-all duration-300 rounded-xl p-8 text-center">
-              <span className="block text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">112</span>
-              <span className="text-xl font-semibold text-white">{t('emergency_services')}</span>
+            <div className="bg-destructive border border-destructive hover:-translate-y-1 transition-all duration-300 rounded-xl p-6 md:p-8 text-center">
+              <span className="block text-4xl md:text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">112</span>
+              <span className="text-lg md:text-xl font-semibold text-white">{t('emergency_services')}</span>
             </div>
           </a>
         </div>
 
         {/* Filters */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Select>
-            <SelectTrigger className="bg-card border-border text-foreground">
+            <SelectTrigger className="bg-card border-border text-foreground w-full">
               <SelectValue placeholder={t('all_cities')} />
             </SelectTrigger>
             <SelectContent>
@@ -54,7 +54,7 @@ const NGOSection = () => {
           </Select>
 
           <Select>
-            <SelectTrigger className="bg-card border-border text-foreground">
+            <SelectTrigger className="bg-card border-border text-foreground w-full">
               <SelectValue placeholder={t('all_types')} />
             </SelectTrigger>
             <SelectContent>
@@ -65,13 +65,13 @@ const NGOSection = () => {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive hover:text-white">
+          <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive hover:text-white">
             {t('stealth_tips')}
           </Button>
         </div>
 
-        {/* NGO Grid - Matches image_63f6a2.png */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* NGO Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {ngos.map((ngo, i) => (
             <div key={i} className="bg-card border border-border rounded-xl p-6 hover:border-destructive/50 transition-all hover:shadow-lg flex flex-col h-full">
               <h4 className="text-xl font-bold text-white mb-4">{ngo.name}</h4>

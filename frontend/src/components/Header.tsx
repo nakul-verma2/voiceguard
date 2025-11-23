@@ -33,7 +33,8 @@ const Header = () => {
       {/* Ambient gradient glow */}
       <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-transparent to-accent/10 pointer-events-none" />
       
-      <nav className="container mx-auto px-6 py-4 relative">
+      {/* Adjusted padding for mobile */}
+      <nav className="container mx-auto px-4 py-3 md:px-6 md:py-4 relative">
         <div className="flex items-center justify-between">
           
           {/* Logo Section */}
@@ -41,32 +42,37 @@ const Header = () => {
             onClick={() => navigate('/')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-3 group relative"
+            className="flex items-center gap-2 md:gap-3 group relative shrink-0"
           >
             <div className="relative">
               <div className="absolute inset-0 bg-accent/20 blur-xl rounded-full group-hover:bg-accent/30 transition-all duration-300" />
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-lg shadow-accent/30">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-lg shadow-accent/30">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
             </div>
             
             <div className="flex flex-col items-start">
-              <span className="text-2xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+              {/* Responsive Text Size */}
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
                 VoiceGuard
               </span>
-              <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wider uppercase">
+              <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wider uppercase hidden xs:block">
                 Safety First
               </span>
             </div>
           </motion.button>
 
           {/* Controls Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             
-            {/* 1. Mode Toggle */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            {/* 1. Mode Toggle - HIDDEN ON MOBILE (Requested Change) */}
+            <motion.div 
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.95 }}
+              className="hidden md:block" 
+            >
               <Button
                 variant="ghost"
                 size="sm"
@@ -77,19 +83,19 @@ const Header = () => {
                   {mode === 'impact' ? (
                     <>
                       <Moon className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t('calm_mode')}</span>
+                      <span>{t('calm_mode')}</span>
                     </>
                   ) : (
                     <>
                       <Sun className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t('impact_mode')}</span>
+                      <span>{t('impact_mode')}</span>
                     </>
                   )}
                 </span>
               </Button>
             </motion.div>
             
-            {/* 2. Language Selector */}
+            {/* 2. Language Selector - Hidden on Mobile */}
             <div className="relative group hidden md:block">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
               <select
@@ -105,11 +111,12 @@ const Header = () => {
               </select>
             </div>
 
-            {/* 3. CLERK AUTH BUTTONS (New) */}
+            {/* 3. CLERK AUTH BUTTONS */}
             <div className="flex items-center">
                 {!isSignedIn && (
                     <SignInButton mode="modal">
-                        <Button variant="outline" className="rounded-xl border-white/10 hover:bg-accent/10">
+                        {/* Smaller button on mobile */}
+                        <Button variant="outline" className="rounded-xl border-white/10 hover:bg-accent/10 h-9 px-3 text-xs md:h-10 md:px-4 md:text-sm">
                             Sign In
                         </Button>
                     </SignInButton>
@@ -119,25 +126,26 @@ const Header = () => {
                         afterSignOutUrl="/"
                         appearance={{
                             elements: {
-                                avatarBox: "w-10 h-10 border-2 border-accent shadow-glow"
+                                avatarBox: "w-8 h-8 md:w-10 md:h-10 border-2 border-accent shadow-glow"
                             }
                         }}
                     />
                 )}
             </div>
             
-            {/* 4. Quick Exit Button */}
+            {/* 4. Quick Exit Button - VISIBLE ON PHONE */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 size="sm"
                 onClick={handleQuickExit}
-                className="relative h-10 px-6 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold shadow-xl shadow-red-500/30 hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 border-0 overflow-hidden group"
+                className="relative h-9 px-3 md:h-10 md:px-6 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold shadow-xl shadow-red-500/30 hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 border-0 overflow-hidden group"
               >
-                <span className="relative z-10 flex items-center gap-2">
+                <span className="relative z-10 flex items-center gap-1 md:gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  <span className="hidden sm:inline">{t('quick_exit')}</span>
+                  {/* Text is now visible on phone (text-xs) but smaller */}
+                  <span className="text-xs md:text-sm whitespace-nowrap">{t('quick_exit')}</span>
                 </span>
               </Button>
             </motion.div>

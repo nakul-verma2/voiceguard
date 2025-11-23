@@ -5,34 +5,34 @@ const StealthSection = () => {
   const { t } = useApp();
 
   return (
-    <section className="py-24 bg-black relative border-t border-border">
+    <section className="py-16 md:py-24 bg-black relative border-t border-border">
       <div className="container mx-auto px-4 text-center">
         
-        {/* Header from image_630605.png */}
-        <div className="mb-16">
+        {/* Header */}
+        <div className="mb-12 md:mb-16">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 border border-destructive/20 mb-6">
             <ShieldAlert className="w-8 h-8 text-destructive" />
           </div>
-          <h2 className="text-4xl font-bold text-white mb-2">{t('stealth_title')}</h2>
-          <p className="text-muted-foreground text-lg mb-4">{t('stealth_subtitle')}</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('stealth_title')}</h2>
+          <p className="text-muted-foreground text-base md:text-lg mb-4">{t('stealth_subtitle')}</p>
           <div className="w-16 h-1 bg-destructive mx-auto rounded-full"></div>
         </div>
 
-        {/* Privacy Protection List - Matches image_63f6c7.png */}
-        <div className="mb-16">
-          <h3 className="text-2xl font-semibold text-white mb-8">{t('stealth_features_title')}</h3>
-          <ul className="inline-block text-left space-y-4 text-muted-foreground">
+        {/* Privacy Protection List */}
+        <div className="mb-12 md:mb-16">
+          <h3 className="text-xl md:text-2xl font-semibold text-white mb-8">{t('stealth_features_title')}</h3>
+          <ul className="inline-block text-left space-y-4 text-muted-foreground text-sm md:text-base">
             {[1, 2, 3, 4, 5].map((n) => (
-              <li key={n} className="flex items-center gap-3">
-                <span className="text-destructive text-xl">✓</span>
+              <li key={n} className="flex items-start md:items-center gap-3">
+                <span className="text-destructive text-xl shrink-0">✓</span>
                 <span>{t(`feature${n}`)}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Grid Layout - Matches image_630605.png */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {[
             { icon: EyeOff, title: t('feature_fake') },
             { icon: History, title: t('feature_hist') },
