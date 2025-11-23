@@ -1,152 +1,287 @@
-import time
-import numpy as np
-import asyncio
-from utils.audio import AudioCapture
-from utils.vad import VoiceActivityDetector
-from utils.incident import IncidentRecorder
-from utils.audio_buffer import AudioBuffer
-from utils.speech_analysis import SpeechAnalyzer
+import os
+import logging
+import multiprocessing
+from typing import Optional, List
+import uuid
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
+# Import the new monitoring loop
+from monitoring_service import run_monitoring_loop
+
+# --- Local Utils Imports ---
 from utils.sos import sos
-
-async def main():
-    print("🛡️  VoiceGuard - Step 5: Emergency SMS ")
-    print("=" * 50)
-    
-    # Create components
-    audio_capture = AudioCapture()
-    vad_detector = VoiceActivityDetector(aggressiveness=3)
-    incident_recorder = IncidentRecorder()
-    audio_buffer = AudioBuffer(max_duration_seconds=15)
-    speech_analyzer = SpeechAnalyzer(model_size="base")
+from utils.database import get_or_create_user, update_user_contacts, save_evidence_metadata
+from utils.storage import upload_evidence_to_cloudinary
+from utils.chatbot import WomenSafetyChatbot
 
 
-    # Stats tracking
-    total_chunks = 0
-    speech_chunks = 0
-    high_threat_chunks = 0
-    consecutive_high_threats = 0
+# -----------------------------
+# ENV + APP SETUP
+# -----------------------------
+load_dotenv()
+
+app = FastAPI(title="VoiceGuard Safety API", version="2.0.0")
+
+# CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+
+# Ensure the temporary upload folder exists
+UPLOAD_FOLDER = 'temp_uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+# -----------------------------
+# GLOBAL STATE FOR PROCESS MANAGEMENT
+# -----------------------------
+monitoring_process: Optional[multiprocessing.Process] = None
+stop_monitoring_event: Optional[multiprocessing.Event] = None
+
+# -----------------------------
+# REQUEST MODELS
+# -----------------------------
+class MonitoringRequest(BaseModel):
+    user_id: str
+
+class ContactRequest(BaseModel):
+    user_id: str
+    contact: str
+
+class SosRequest(BaseModel):
+    user_id: str
+
+# -----------------------------
+# API ROUTES
+# -----------------------------
+
+@app.get("/")
+async def root():
+    """Root endpoint to check if the API is running."""
+    return {"message": "VoiceGuard API is running."}
+
+# -----------------------------
+# USER & CONTACT MANAGEMENT
+# -----------------------------
+@app.post("/add_contact")
+async def add_contact_route(data: ContactRequest):
+    """Adds a new emergency contact for a user."""
+    user = get_or_create_user(data.user_id)
+    if not user:
+        raise HTTPException(status_code=500, detail="Could not get or create user.")
+
+    # Add the new contact if it's not already in the list
+    if data.contact not in user.get("emergency_contacts", []):
+        new_contacts = user.get("emergency_contacts", []) + [data.contact]
+        update_user_contacts(data.user_id, new_contacts)
+        return {"status": "success", "message": "Contact added successfully."}
+    else:
+        return {"status": "info", "message": "Contact already exists."}
+
+
+@app.post("/trigger_sos_for_user")
+async def trigger_sos_route(data: SosRequest):
+    """Triggers SOS alerts for all of a user's registered contacts."""
+    user = get_or_create_user(data.user_id)
+    if not user:
+        raise HTTPException(status_code=500, detail="Could not find user.")
+        
+    contacts = user.get("emergency_contacts", [])
+    if not contacts:
+        raise HTTPException(status_code=404, detail="No emergency contacts found for this user.")
+
+    sent_count = 0
+    for contact in contacts:
+        if sos(contact):
+            sent_count += 1
     
-    # Incident detection parameters
-    HIGH_THREAT_THRESHOLD = 1
-    COOLDOWN_TIME = 30
-    last_incident_time = 0
+    if sent_count > 0:
+        return {"status": "success", "message": f"Successfully sent {sent_count} SOS message(s)."}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send any SOS messages.")
+
+
+# -----------------------------
+# MONITORING SERVICE
+# -----------------------------
+@app.post("/start_monitoring")
+async def start_monitoring_route(data: MonitoringRequest):
+    """
+    Starts the background monitoring process if it's not already running.
+    """
+    global monitoring_process, stop_monitoring_event
+
+    user = get_or_create_user(data.user_id)
+    if not user:
+        raise HTTPException(status_code=500, detail="Could not get or create user.")
+
+    if monitoring_process and monitoring_process.is_alive():
+        logging.warning("Start monitoring called but process is already active.")
+        return {"status": "info", "message": "Monitoring is already active."}
+
+    logging.info(f"Received request to start monitoring for user: {data.user_id}")
     
+    # Initialize multiprocessing event and process
+    stop_monitoring_event = multiprocessing.Event()
+    monitoring_process = multiprocessing.Process(
+        target=run_monitoring_loop,
+        args=(stop_monitoring_event, data.user_id,)
+    )
+    monitoring_process.start()
+
+    logging.info(f"Monitoring process started with PID: {monitoring_process.pid}")
+    return {"status": "success", "message": "Monitoring started."}
+
+# -----------------------------
+# STOP MONITORING
+# -----------------------------
+@app.post("/stop_monitoring")
+async def stop_monitoring_route():
+    """
+    Stops the background monitoring process if it is running.
+    """
+    global monitoring_process, stop_monitoring_event
+
+    if not monitoring_process or not monitoring_process.is_alive():
+        logging.warning("Stop monitoring called but no process is active.")
+        return {"status": "info", "message": "Monitoring is not active."}
+
+    logging.info("Received request to stop monitoring.")
+    
+    # Signal the process to stop and wait for it to terminate
+    stop_monitoring_event.set()
+    monitoring_process.join(timeout=10)  # Wait for 10 seconds
+
+    if monitoring_process.is_alive():
+        logging.error("Monitoring process failed to stop gracefully. Terminating.")
+        monitoring_process.terminate()
+        monitoring_process.join()
+
+    monitoring_process = None
+    stop_monitoring_event = None
+    
+    logging.info("Monitoring process has been stopped.")
+    return {"status": "success", "message": "Monitoring stopped."}
+
+# -----------------------------
+# EVIDENCE LOCKER
+# -----------------------------
+@app.post("/upload_evidence")
+async def upload_evidence_route(user_id: str = Form(...), files: List[UploadFile] = File(...)):
+
+    user = get_or_create_user(user_id)
+    if not user:
+        raise HTTPException(status_code=500, detail="Could not get or create user.")
+
+    successful_uploads = []
+    failed_uploads = []
+
+    for file in files:
+        original_filename = file.filename
+        temp_file_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4()}-{original_filename}")
+        
+        try:
+            # 1. Save file temporarily to the server
+            with open(temp_file_path, "wb") as buffer:
+                buffer.write(await file.read())
+            logging.info(f"Temporarily saved file: {temp_file_path}")
+
+            # 2. Upload the temporary file to Cloudinary
+            upload_result = upload_evidence_to_cloudinary(
+                file_path=temp_file_path,
+                user_id=user_id,
+                file_name=original_filename
+            )
+            
+            if upload_result and 'secure_url' in upload_result:
+                # 3. Save metadata to MongoDB
+                save_evidence_metadata(
+                    user_id=user_id,
+                    filename=original_filename,
+                    file_url=upload_result['secure_url'],
+                    content_type=file.content_type
+                )
+                successful_uploads.append(original_filename)
+                logging.info(f"Successfully uploaded and logged evidence: {original_filename} for user {user_id}")
+            else:
+                failed_uploads.append(original_filename)
+                logging.error(f"Cloudinary upload failed for {original_filename}.")
+
+        except Exception as e:
+            logging.error(f"Error processing file {original_filename}: {e}")
+            failed_uploads.append(original_filename)
+        finally:
+            # 4. Delete the temporary file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+                logging.info(f"Deleted temporary file: {temp_file_path}")
+
+    if not successful_uploads:
+        raise HTTPException(status_code=500, detail="File upload failed for all files.")
+
+    return {
+        'status': 'success',
+        'message': f'Successfully uploaded {len(successful_uploads)} file(s).',
+        'successful_files': successful_uploads,
+        'failed_files': failed_uploads
+    }
+
+
+# -----------------------------
+# CHATBOT INSTANCE & ROUTES
+# -----------------------------
+API_KEY = os.getenv("OPENAI_API_KEY")
+chatbot_instance = WomenSafetyChatbot(api_key=API_KEY)
+
+class ChatRequest(BaseModel):
+    user_id: str
+    message: str
+
+class ClearHistoryRequest(BaseModel):
+    user_id: str
+
+@app.post('/chat')
+async def chat_route(data: ChatRequest):
+
+    user = get_or_create_user(data.user_id)
+    if not user:
+        raise HTTPException(status_code=500, detail="Could not get or create user.")
+
     try:
-        # Start recording
-        audio_capture.start_recording()
-        
-        print("🎯 VoiceGuard is monitoring")
-        print("   • HIGH threat incidents trigger SMS to emergency contacts")
-        print("   • Speech analysis with threat detection")
-        print("   • Audio evidence collection")
-        print("Press Ctrl+C to stop")
-        print()
-        
-        # Main loop
-        while True:
-            chunk = audio_capture.get_audio_chunk()
-            if chunk:
-                audio_data, timestamp = chunk
-                total_chunks += 1
-                
-                # Always add to audio buffer
-                audio_buffer.add_audio(audio_data)
-                
-                # Add to VAD
-                vad_detector.add_audio(audio_data)
-                
-                # Check if speech is detected
-                if vad_detector.is_speech_detected():
-                    speech_chunks += 1
-                    
-                    # Calculate audio-based threat level
-                    volume = np.sqrt(np.mean(audio_data.astype(np.float32)**2))
-                    speech_confidence = vad_detector.get_speech_confidence()
-                    
-                    # Audio threat calculation
-                    if volume > 1000 and speech_confidence > 0.7:
-                        audio_threat_level = "HIGH"
-                        threat_emoji = "🔴"
-                        consecutive_high_threats += 1
-                        high_threat_chunks += 1
-                    elif volume > 1000 and speech_confidence > 0.5:
-                        audio_threat_level = "MEDIUM"
-                        threat_emoji = "🟡"
-                        consecutive_high_threats = 0
-                    else:
-                        audio_threat_level = "LOW"
-                        threat_emoji = "🟢"
-                        consecutive_high_threats = 0
-                    
-                    print(f"🗣️  SPEECH: Vol={volume:>6.0f} | Conf={speech_confidence:.2f} | {threat_emoji} {audio_threat_level}")
-                    
-                    # Check for incident recording
-                    current_time = time.time()
-                    if (audio_threat_level == "HIGH" and 
-                        consecutive_high_threats >= HIGH_THREAT_THRESHOLD and
-                        current_time - last_incident_time > COOLDOWN_TIME):
-                        
-                        print("🔍 Analyzing speech content...")
-                        
-                        # Get audio evidence for analysis
-                        evidence_audio = audio_buffer.get_recent_audio(duration_seconds=8)
-                        
-                        # Perform speech analysis
-                        speech_analysis = speech_analyzer.analyze_audio_with_text(
-                            evidence_audio, 
-                            sample_rate=audio_capture.sample_rate
-                        )
-                        
-                        # Record incident with speech analysis
-                        incident = incident_recorder.record_incident(
-                            threat_level="HIGH",
-                            volume=volume,
-                            speech_confidence=speech_confidence,
-                            audio_data=evidence_audio,
-                            speech_analysis=speech_analysis,
-                            sample_rate=audio_capture.sample_rate
-                        )
-                        
-                        if incident:
-                            # Send emergency SMS alert
-                            print("📱 Sending emergency SMS alert...")
-                            phone = input("Enter destination phone (e.g., +11234567890): ").strip()
-                            sms_sent = sos(phone)
-                            if sms_sent:
-                                print("✅ Emergency contacts notified!")
-                            else:
-                                print("❌ Failed to send SMS alerts")
-                            
-                            last_incident_time = current_time
-                            consecutive_high_threats = 0
-                            print("=" * 60)
-                
-                # Print stats every 100 chunks
-                if total_chunks % 100 == 0 and total_chunks > 0:
-                    speech_ratio = speech_chunks / total_chunks
-                    threat_ratio = high_threat_chunks / speech_chunks if speech_chunks > 0 else 0
-                    print(f"📊 Stats: Speech {speech_chunks}/{total_chunks} ({speech_ratio:.1%}) | High threats: {high_threat_chunks} ({threat_ratio:.1%})")
-            
-            time.sleep(0.05)
-            
-    except KeyboardInterrupt:
-        print(f"\n\n🛑 VoiceGuard Stopped")
-        
-        # Show final summary
-        summary = incident_recorder.get_incident_summary()
-        print(f"📊 Final Stats:")
-        print(f"   Total incidents recorded: {summary['total_incidents']}")
-        print(f"   Total audio chunks: {total_chunks}")
-        print(f"   Speech chunks: {speech_chunks}")
-        print(f"   High threat chunks: {high_threat_chunks}")
-        
-        if summary['total_incidents'] > 0:
-            print(f"\n📁 Incident files saved in:")
-            print(f"   incidents/ - JSON records with transcripts and SMS logs")
-            print(f"   evidence/ - Audio evidence files")
-    finally:
-        audio_capture.stop_recording()
+        response = chatbot_instance.chat(data.user_id, data.message)
+        if not response.get('success'):
+            raise HTTPException(status_code=400, detail=response)
+        return response
+    except Exception as e:
+        logging.error(f"Error in /chat route: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
+@app.get('/stats')
+async def stats_route():
+    stats = chatbot_instance.get_stats()
+    return stats
+
+@app.post('/clear-history')
+async def clear_history_route(data: ClearHistoryRequest):
+    chatbot_instance.clear_user_history(data.user_id)
+    return {'success': True, 'message': 'History cleared'}
+
+
+# -----------------------------
+# MAIN ENTRY POINT
+# -----------------------------
 if __name__ == "__main__":
-    # Run async main function
-    asyncio.run(main())
+    import uvicorn
+    # Required for multiprocessing to work correctly on some platforms
+    multiprocessing.freeze_support()
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))

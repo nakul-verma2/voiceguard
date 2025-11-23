@@ -21,25 +21,97 @@ class WomenSafetyChatbot:
 
     def __init__(self, api_key: str, chroma_path: str = "./chroma_db"):
         """
-        Initialize the chatbot.
-
-        Args:
-            api_key: OpenRouter API key.
-            chroma_path: Path to ChromaDB persistent storage.
+        Initialize the chatbot with multi-model fallback and comprehensive keywords.
         """
         try:
             self.api_key = api_key
             self.chroma_path = chroma_path
-            self.model = os.getenv("MODEL_ID", "meta-llama/llama-3.3-70b-instruct:free")
+            
+            # Primary and Fallback Models (To prevent 429 Errors)
+            self.primary_model = os.getenv("MODEL_ID", "meta-llama/llama-3.3-70b-instruct:free")
+            self.fallback_models = [
+                self.primary_model,
+                "google/gemini-2.0-flash-lite-preview-02-05:free",
+                "meta-llama/llama-3-8b-instruct:free",
+                "mistralai/mistral-7b-instruct:free"
+            ]
 
             # Initialize ChromaDB for RAG
             self.client = chromadb.PersistentClient(path=chroma_path)
             self.collection = self.client.get_collection("women_safety_laws")
 
-            logger.info("✅ Chatbot initialized successfully")
+            # 🌟 COMPREHENSIVE KEYWORD LIST (English + Hindi + Hinglish)
+            # These triggers determine if we should search the legal database.
+            self.safety_keywords = set([
+                # --- English: Legal & Official ---
+                "law", "legal", "police", "attack", "fir", "complaint", "court", "judge", "magistrate",
+                "lawyer", "advocate", "rights", "ipc", "crpc", "section", "act", "warrant",
+                "bail", "arrest", "custody", "divorce", "alimony", "maintenance", "dowry",
+                "protection", "order", "dir", "shelter", "ngo", "commission", "ncw",
+                
+                # --- English: Abuse & Violence ---
+                "abuse", "violence", "domestic", "hit", "beat", "slap", "kick", "punch",
+                "push", "shove", "choke", "strangle", "burn", "acid", "weapon", "knife",
+                "injury", "blood", "bruise", "hurt", "pain", "kill", "murder", "death",
+                "torture", "cruelty", "harass", "harassment", "threat", "threatening",
+                
+                # --- English: Sexual & Cyber ---
+                "rape", "assault", "molest", "molestation", "touch", "grope", "force",
+                "sexual", "stalk", "stalking", "follow", "watch", "cyber", "online",
+                "photo", "video", "leak", "blackmail", "nude", "porn", "sextortion",
+                "trafficking", "bulling", "troll",
+                
+                # --- Hindi/Hinglish: Physical/Action ---
+                "maar", "maarta", "peet", "pitai", "thappad", "danda", "laat", "ghusa",
+                "chot", "khoon", "jalaya", "jala", "acid", "chaaku", "jaan", "marunga",
+                "dabao", "zabardasti", "pakda", "khencha", "dhakka",
+                
+                # --- Hindi/Hinglish: Legal/Official ---
+                "thana", "police", "daroga", "inspector", "report", "shikayat", "case",
+                "kachehri", "kachahri", "adalat", "kanoon", "vakeel", "vakil", "insaaf",
+                "nyay", "jail", "qaidi", "zamanat", "kagaz", "dahej",
+                
+                # --- Hindi/Hinglish: Abuse/Harassment ---
+                "gali", "gaali", "galoch", "badtameezi", "pareshan", "tana", "taana",
+                "dhamki", "dara", "dar", "khauf", "bhay", "sharam", "izzat",
+                "chhed", "chhedkhani", "ashleel", "ganda", "message", "call",
+                "balatkar", "rapist", "jism", "jismani", "atyaachaar", "atyachar",
+                
+                # --- Relationship Context ---
+                "husband", "pati", "wife", "patni", "in-laws", "sasural", "saas", "sasur",
+                "devar", "nanad", "family", "gharwale", "boyfriend", "lover", "partner",
+                "live-in", "ex", "breakup", "marriage", "shaadi", "relationship",
+
+                # --- 🌟 Proper Hindi (Devanagari) Keywords 🌟 ---
+                
+                # Abuse/Violence (Expanded)
+                "मारपीट", "हिंसा", "दहेज", "प्रताड़ना", "गाली", "धमकी", "बलात्कार", "रेप",
+                "छेड़छाड़", "तेजाब", "हमला", "चोट", "हत्या", "खून", "जबरदस्ती", "शारीरिक",
+                "मानसिक", "यौन", "शोषण", "तलाक", "गुस्सा", "डर", "पीछा", "परेशान",
+                "गला घोंटना", "जलाना", "पीटना", "नोचना", "धक्का", "जख्म", "वार", "अभद्र",
+                "अश्लील", "ब्लैकमेल", "तस्करी", "बंधक", "किडनैप", "अपहरण",
+
+                # Legal/Police/Rights (Expanded)
+                "पुलिस", "थाना", "कोर्ट", "कचहरी", "वकील", "जज", "कानून", "अधिकार", "शिकायत",
+                "एफआईआर", "रिपोर्ट", "गिरफ्तार", "जमानत", "सजा", "इंसाफ", "न्याय", "केस",
+                "महिला आयोग", "धारा", "अधिनियम", "हक", "बयान", "जांच", "गवाह", "सबूत",
+                "हिरासत", "वारंट", "भरण-पोषण", "गुजारा भत्ता", "संरक्षण", "आश्रय", "मदद",
+                "सहायता", "मुकदमा", "तारीख", "फैसला",
+
+                # Relationship/Family/Context (Expanded)
+                "पति", "पत्नी", "ससुराल", "सास", "ससुर", "दहेज़", "शादी", "विवाह", "रिश्ता",
+                "तलाक", "अकेली", "बेटी", "बहन", "जेठ", "देवर", "ननद", "मायके", "दूसरी औरत",
+                "चक्कर", "शक", "नशा", "शराब", "जबरन", "बाल विवाह", "गर्भवती", "सौतन",
+
+                # Emergency/Emotional State
+                "बचाओ", "आत्महत्या", "मरना", "फंसी", "मजबूर", "रो रही", "घबराहट"
+            ])
+
+            logger.info("✅ Chatbot initialized successfully with comprehensive keywords (English, Hindi, Hinglish).")
         except Exception as e:
             logger.error(f"❌ Failed to initialize chatbot: {str(e)}")
-            raise
+            # Do not raise, allow running without RAG if DB fails
+            # raise
 
     def search_laws(self, query: str, n_results: int = 3) -> List[str]:
         """Search ChromaDB for relevant law sections."""
@@ -54,12 +126,17 @@ class WomenSafetyChatbot:
     def build_system_prompt(self) -> str:
         """Build the system prompt for the LLM."""
         return """You are a women's safety assistant for India. Your specialty is women's safety, rights, and Indian law.
+        
         LANGUAGE: Always respond in the same language as the user (English/Hindi/Hinglish).
+        
         RESPONSE STYLE:
-        1. LEGAL & DETAILED: Use if the user asks about laws, IPC sections, legal procedures, FIRs, courts, or rights. Be formal, step-by-step, and mention specific laws.
-        2. SHORT & FRIENDLY: Use for everything else (greetings, general safety tips, emotional support). Be warm, encouraging, and conversational (1-4 sentences).
-        EMERGENCY: If the user is in immediate danger, urge them to contact police (112) or helplines (181) immediately.
-        OUT-OF-SCOPE: If asked about unrelated topics, politely state you focus on women's safety in India.
+        1. LEGAL & DETAILED: Use if the user asks about laws, IPC sections, legal procedures, FIRs, courts, or rights. Be formal, step-by-step, and mention specific laws (IPC/CrPC/DV Act).
+        2. SHORT & EMPATHETIC: Use if the user mentions abuse, fear, or distress. Be supportive first, then provide safety steps.
+        3. CONVERSATIONAL: Use for greetings ("Hi", "Hello", "Namaste", "नमस्ते"). Keep it brief.
+        
+        EMERGENCY: If the user indicates immediate physical danger (e.g., "he is beating me now", "mujhe bachao", "बचाओ"), urge them to call Police (112) or Women's Helpline (181) IMMEDIATELY.
+        
+        CONTEXT: You have access to Indian legal documents. Use the provided LEGAL CONTEXT to answer accurately.
         """
 
     def build_user_message(self, query: str, legal_context: str) -> str:
@@ -69,41 +146,83 @@ class WomenSafetyChatbot:
         return query
 
     def call_openrouter(self, messages: List[Dict], temperature: float = 0.7) -> Optional[str]:
-        """Call OpenRouter API with error handling."""
-        try:
-            response = requests.post(
-                os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1") + "/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json={"model": self.model, "messages": messages, "temperature": temperature, "max_tokens": 500},
-                timeout=30
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data['choices'][0]['message']['content']
-        except requests.exceptions.RequestException as e:
-            logger.error(f"❌ API request error: {e}")
-            return None
-        except (KeyError, IndexError) as e:
-            logger.error(f"❌ Invalid API response structure: {e}")
-            return None
+        """
+        Call OpenRouter API with Fallback Logic.
+        Tries models in order until one succeeds.
+        """
+        base_url = os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1") + "/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "http://localhost:3000",
+            "X-Title": "VoiceGuard"
+        }
+
+        for model in self.fallback_models:
+            try:
+                payload = {
+                    "model": model,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "max_tokens": 500
+                }
+                
+                response = requests.post(base_url, headers=headers, json=payload, timeout=20)
+                
+                # Check for rate limits specifically
+                if response.status_code == 429:
+                    logger.warning(f"⚠️ Model {model} hit rate limit (429). Switching to backup...")
+                    continue 
+                
+                response.raise_for_status()
+                
+                data = response.json()
+                if 'choices' in data and len(data['choices']) > 0:
+                    return data['choices'][0]['message']['content']
+                else:
+                    logger.warning(f"⚠️ Model {model} returned empty choices. Switching...")
+                    continue
+
+            except requests.exceptions.RequestException as e:
+                logger.error(f"❌ Error with model {model}: {e}")
+                continue 
+            except Exception as e:
+                logger.error(f"❌ Unexpected error with {model}: {e}")
+                continue
+
+        logger.error("❌ All models failed to generate a response.")
+        return None
 
     def add_disclaimer(self, answer: str) -> str:
         """Add a legal disclaimer to the response."""
-        if "Helpline 181" not in answer:
-            answer += "\n\nThis is legal information, not professional advice. For urgent help, call the Women Helpline at 181."
+        if "181" not in answer and "112" not in answer:
+            answer += "\n\n(Note: For urgent help, dial 181 or 112.)"
         return answer
 
     def _should_skip_db_search(self, message: str) -> bool:
-        """Determine if the DB search should be skipped based on heuristics."""
-        message = message.lower()
-        if len(message.split()) < 4:
+        """
+        Determine if the DB search should be skipped based on heuristics.
+        Returns TRUE to SKIP (for simple chats), FALSE to SEARCH (for legal/safety issues).
+        """
+        message_lower = message.lower()
+        
+        # 1. Check length (very short messages usually don't need RAG, unless they are specific keywords)
+        words = message_lower.split()
+        if len(words) < 2 and message_lower not in self.safety_keywords:
             return True
-        legal_keywords = ["law", "legal", "police", "fir", "abuse", "domestic", "violence", "section", "act", "ipc", "crpc", "court", "advocate", "lawyer", "harassment"]
-        if any(keyword in message for keyword in legal_keywords):
-            return False
-        if message.endswith('?') or message.startswith(('what', 'how', 'why', 'who', 'when', 'where')):
-            return False
-        return True
+
+        # 2. Check for Question Words (usually imply a need for info)
+        if message_lower.startswith(('what', 'how', 'why', 'who', 'when', 'where', 'can i', 'is it', 'kya', 'kaise', 'kyun')):
+            return False # Do not skip
+
+        # 3. Check against comprehensive keyword list
+        # We check if any token in the message roughly matches our keywords
+        for word in words:
+            # Simple stemming: check if a keyword is contained in the word (e.g., "beating" contains "beat")
+            for keyword in self.safety_keywords:
+                if keyword in word: 
+                    return False # Do not skip, found a relevant keyword
+
+        return True # Skip if no keywords found
 
     def chat(self, user_id: str, message: str, language: str = "english") -> Dict:
         """Main chat function with database persistence and search optimization."""
@@ -117,9 +236,11 @@ class WomenSafetyChatbot:
             # --- Optimized RAG Search ---
             db_search_time_ms = 0
             context = ""
+            
             if self._should_skip_db_search(message):
-                logger.info("💬 Simple message detected, skipping DB search for faster response.")
+                logger.info("💬 Simple conversation detected, skipping DB search.")
             else:
+                logger.info("🔍 Safety/Legal keywords detected. Searching Database...")
                 db_search_start_time = time.time()
                 legal_docs = self.search_laws(message)
                 context = "\n\n".join(legal_docs)
@@ -140,7 +261,7 @@ class WomenSafetyChatbot:
             api_call_time_ms = round((time.time() - api_call_start_time) * 1000)
 
             if response is None:
-                return {"error": "Failed to generate response from AI model.", "success": False}
+                return {"error": "The AI service is currently busy. Please try again.", "success": False}
 
             final_response = self.add_disclaimer(response)
 
@@ -148,7 +269,8 @@ class WomenSafetyChatbot:
             save_chat_message(user_id, "user", message)
             save_chat_message(user_id, "assistant", final_response)
 
-            logger.info(f"✅ Response generated and saved for user {user_id}")
+            overall_processing_time_ms = round((time.time() - overall_start_time) * 1000)
+            logger.info(f"✅ Response generated. DB: {db_search_time_ms}ms, API: {api_call_time_ms}ms")
             
             return {
                 "success": True,
@@ -156,7 +278,7 @@ class WomenSafetyChatbot:
                 "timestamp": datetime.now().isoformat(),
                 "db_search_time_ms": db_search_time_ms,
                 "api_call_time_ms": api_call_time_ms,
-                "overall_processing_time_ms": round((time.time() - overall_start_time) * 1000)
+                "overall_processing_time_ms": overall_processing_time_ms
             }
 
         except Exception as e:
@@ -169,10 +291,8 @@ class WomenSafetyChatbot:
         db_clear_history(user_id)
 
     def get_stats(self) -> Dict:
-        """Get chatbot statistics. (Note: In-memory stats are no longer available)."""
         return {
-            "active_users": "N/A (now stored in DB)",
-            "total_messages": "N/A (now stored in DB)",
-            "model": self.model,
+            "active_users": "Stored in DB",
+            "model": "Auto-Switching (Llama/Gemini/Mistral)",
             "chroma_path": self.chroma_path
         }

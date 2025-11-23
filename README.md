@@ -83,15 +83,17 @@ Here's a look at the VoiceGuard application in action.
 
 #### Backend
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
 
 #### Frontend
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Clerk](https://img.shields.io/badge/Clerk-6C47FF?style=for-the-badge&logo=clerk&logoColor=white)
 
 ---
 
@@ -103,10 +105,13 @@ To get a local copy up and running, follow these steps.
 
 *   Python 3.8+
 *   `pip` package manager
+*   Node.js and `npm`
 *   A [Google Cloud](https://cloud.google.com/) account with an active project.
 *   A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) account.
+*   A [Cloudinary](https://cloudinary.com/) account.
+*   A [Clerk](https://clerk.com/) account.
 
-#### 2. Initial Setup
+#### 2. Backend Setup
 
 1.  **Clone the repository:**
     ```sh
@@ -130,73 +135,33 @@ To get a local copy up and running, follow these steps.
     pip install -r requirements.txt
     ```
 
-#### 3. Cloud Services Setup
+4.  **Environment Variables:**
+    *   Create a `.env` file in the root directory.
+    *   Add the necessary environment variables for MongoDB, Cloudinary, OpenAI, and Clerk.
 
-**A. MongoDB Atlas (Database)**
-
-1.  **Create a Free Cluster:**
-    *   Log in to your MongoDB Atlas account.
-    *   Create a new project and then build a new database.
-    *   Choose the **M0 (Free)** shared cluster. Select a region and give your cluster a name.
-
-2.  **Create a Database User:**
-    *   Under "Database Access," create a new database user. Use a secure password and save it.
-
-3.  **Whitelist IP Address:**
-    *   Under "Network Access," add your current IP address to the IP access list. For development, the "Allow Access from Anywhere" (`0.0.0.0/0`) option is easiest.
-
-4.  **Get Connection String:**
-    *   Go to your database dashboard and click "Connect."
-    *   Choose "Drivers" and select "Python."
-    *   Copy the **connection string (URI)**.
-
-**B. Cloudinary (File Storage)**
-
-1.  **Create a Free Account:**
-    *   Go to the Cloudinary website and sign up for a free account. You should not need to enter any payment information.
-
-2.  **Find Your Credentials:**
-    *   After signing up, you will be taken to your account's Dashboard.
-    *   At the top, you will see your **Cloud Name**, **API Key**, and **API Secret**.
-    *   Even easier, Cloudinary provides a single string that contains all of this. Look for the **"API Environment variable"** field. It will look like `cloudinary://<api_key>:<api_secret>@<cloud_name>`.
-    *   **Copy this entire string.**
-
-#### 4. Environment Variables
-
-1.  Create a `.env` file in the root directory of the project.
-2.  Add the following variables to your `.env` file, pasting in the values you copied from MongoDB Atlas and Cloudinary:
-
-    ```env
-    # --- OpenAI/LLM Keys ---
-    OPENAI_API_KEY=sk-...
-    OPENAI_BASE_URL=https://openrouter.ai/api/v1
-    MODEL_ID=mistralai/mistral-nemo:free
-    EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-
-    # --- MongoDB Atlas ---
-    MONGO_URI="mongodb+srv://<your_username>:<your_password>@your_cluster_url/?retryWrites=true&w=majority"
-    MONGO_DB_NAME="voiceguard_db"
-
-    # --- Cloudinary ---
-    CLOUDINARY_URL="cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>"
-
-    # --- Server ---
-    PORT=5000
-    ```
-
-#### 5. Running the Application
-
-1.  **Set up the ChromaDB database (for RAG):**
+5.  **Run the Backend Server:**
     ```sh
-    python setup/setup_chromadb.py
+    uvicorn main:app --host 0.0.0.0 --port 5000 --reload
     ```
 
-2.  **Start the Flask server:**
+#### 3. Frontend Setup
+
+1.  **Navigate to the frontend directory:**
     ```sh
-    python app.py
+    cd frontend
     ```
 
-3.  Open your web browser and navigate to `http://127.0.0.1:5000`.
+2.  **Install JavaScript dependencies:**
+    ```sh
+    npm install
+    ```
+
+3.  **Run the frontend development server:**
+    ```sh
+    npm run dev
+    ```
+
+4.  Open your web browser and navigate to the URL provided by the development server (usually `http://localhost:5173`).
 
 ---
 
