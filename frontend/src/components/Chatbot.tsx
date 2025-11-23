@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { sendChatMessage } from '@/lib/apiService';
-import { useUser } from "@clerk/clerk-react"; // 👈 Import Clerk
+import { useUser } from "@clerk/clerk-react";
 
 const Chatbot = () => {
   const { t } = useApp();
@@ -14,19 +14,21 @@ const Chatbot = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollEndRef = useRef<HTMLDivElement>(null);
-  
-  // 👈 Get User from Clerk
+
   const { user } = useUser();
 
-  // Load initial greeting
   useEffect(() => {
     setMessages([{ text: t('chatbot_greeting'), isBot: true }]);
   }, [t]);
 
-  // Auto scroll to bottom
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen, isTyping]);
+
+  // Clean markdown (*text*) for UI clarity
+  const cleanMarkdown = (text: string) => {
+    return text.replace(/\*(.*?)\*/g, '$1');
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isTyping) return;
@@ -38,16 +40,12 @@ const Chatbot = () => {
     setIsTyping(true);
 
     try {
-      // 👈 Use Clerk ID if logged in, otherwise 'guest_session'
-      // This fixes the "missing argument" error
       const activeUserId = user ? user.id : `guest_${new Date().getTime()}`;
-      
       const botResponse = await sendChatMessage(activeUserId, userMessage);
 
-      setMessages((prev) => [
-        ...prev,
-        { text: botResponse, isBot: true },
-      ]);
+      const cleanResponse = cleanMarkdown(botResponse);
+
+      setMessages((prev) => [...prev, { text: cleanResponse, isBot: true }]);
     } catch (error) {
       console.error('Chatbot Error:', error);
       setMessages((prev) => [
@@ -64,7 +62,6 @@ const Chatbot = () => {
       {isOpen && (
         <div className="mb-4 w-[350px] max-w-[90vw] h-[450px] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in">
 
-          {/* Header */}
           <div className="bg-accent p-4 flex justify-between items-center">
             <h3 className="font-bold text-white flex items-center gap-2">
               <MessageCircle className="w-4 h-4" />
@@ -80,14 +77,10 @@ const Chatbot = () => {
             </Button>
           </div>
 
-          {/* Messages */}
           <ScrollArea className="flex-1 p-4 bg-background/50">
             <div className="space-y-4">
               {messages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}
-                >
+                <div key={i} className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
                   <div
                     className={`max-w-[80%] p-3 rounded-lg text-sm ${
                       msg.isBot
@@ -100,7 +93,6 @@ const Chatbot = () => {
                 </div>
               ))}
 
-              {/* Typing Indicator */}
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="p-4 rounded-lg bg-secondary text-secondary-foreground rounded-tl-none flex items-center space-x-1 h-10">
@@ -115,7 +107,6 @@ const Chatbot = () => {
             </div>
           </ScrollArea>
 
-          {/* Input */}
           <div className="p-3 border-t border-border bg-card flex gap-2">
             <Input
               value={inputValue}
@@ -137,7 +128,6 @@ const Chatbot = () => {
         </div>
       )}
 
-      {/* Floating Toggle Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={`h-14 w-14 rounded-full shadow-glow transition-transform duration-300 ${
@@ -148,7 +138,6 @@ const Chatbot = () => {
         <MessageCircle className="w-7 h-7" />
       </Button>
 
-      {/* Close Overlay Button */}
       {isOpen && (
         <Button
           onClick={() => setIsOpen(false)}
